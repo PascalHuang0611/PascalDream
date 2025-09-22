@@ -27,6 +27,97 @@
             align-items: flex-start;
             gap: 20px;
         }
+
+        /* --- 修煉面板 --- */
+        #cultivation-panel {
+            width: 300px;
+            height: 700px;
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+            gap: 15px; /* 稍微調整間距 */
+            flex-shrink: 0;
+        }
+        #cultivation-panel h2 {
+            margin: 0;
+            color: #00bcd4;
+            text-align: center;
+        }
+
+        /* 天氣資訊 */
+        #weather-info {
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        #weather-info p {
+            margin: 4px 0;
+        }
+        #weather-location {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .meditation-visual {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .meditation-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .meditating-person-img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain; /* 避免圖片被拉伸 */
+        }
+        
+        .revolving-orb {
+            position: absolute;
+            top: 50%; /* 將動畫中心點設在容器中央 */
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: #00e5ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 30px #fff;
+            animation: revolve 10s linear infinite;
+        }
+
+        @keyframes revolve {
+            from {
+                transform: translate(-50%, -50%) rotate(0deg) translateX(100px) rotate(0deg);
+            }
+            to {
+                transform: translate(-50%, -50%) rotate(360deg) translateX(100px) rotate(-360deg);
+            }
+        }
+
+        .cultivation-stats {
+            width: 100%;
+            text-align: center;
+            font-size: 18px; /* 調整字體大小以容納新行 */
+        }
+         .cultivation-stats p {
+            margin: 8px 0;
+        }
         
         /* --- 遊戲主容器 --- */
         #game-container {
@@ -161,6 +252,17 @@
             to { opacity: 0; transform: translateY(-60px); }
         }
 
+        .exp-indicator {
+            position: absolute;
+            font-size: 22px;
+            font-weight: bold;
+            color: #FFD700; /* Gold */
+            text-shadow: 1px 1px 2px #000;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+
         .slash-effect {
             position: absolute;
             width: 100px;
@@ -203,6 +305,25 @@
 </head>
 <body>
     <div id="app-wrapper">
+        <!-- 修煉面板 -->
+        <div id="cultivation-panel">
+            <h2>修煉</h2>
+            <div id="weather-info">
+                <p><span id="weather-location">讀取天氣中...</span></p>
+                <p><span id="weather-condition">--</span> | 溫度: <span id="weather-temp">--</span>°C | 濕度: <span id="weather-humidity">--</span>%</p>
+            </div>
+            <div class="meditation-visual">
+                <div class="meditation-container">
+                    <img src="./player_image.png" alt="修煉中的小人" class="meditating-person-img" onerror="this.style.display='none'">
+                    <div class="revolving-orb"></div>
+                </div>
+            </div>
+            <div class="cultivation-stats">
+                <p>經驗值: <span id="player-exp">0</span></p>
+                <p>修煉速度: <span id="exp-rate">1.00</span> 點/秒</p>
+            </div>
+        </div>
+
         <div id="game-container">
             <!-- 戰鬥畫面 -->
             <div id="combat-screen">
@@ -258,6 +379,9 @@
         let monsterStats = {}; // 初始化為空物件，將由 resetGame 填入
 
         // --- 遊戲狀態變數 ---
+        let playerExperience = 0;
+        let currentTemperature = null;
+        let currentHumidity = null;
         let monsterLevel = 1;
         let isGameRunning = false;
         let gameInterval = null;
@@ -265,6 +389,12 @@
         const TICK_RATE = 50;
 
         // --- 2. 獲取 HTML 元素 ---
+        const weatherLocationEl = document.getElementById('weather-location');
+        const weatherConditionEl = document.getElementById('weather-condition');
+        const weatherTempEl = document.getElementById('weather-temp');
+        const weatherHumidityEl = document.getElementById('weather-humidity');
+        const playerExpEl = document.getElementById('player-exp');
+        const expRateEl = document.getElementById('exp-rate');
         const playerHpTextEl = document.getElementById('player-hp-text');
         const playerAtkEl = document.getElementById('player-atk');
         const playerDefEl = document.getElementById('player-def');
@@ -284,10 +414,88 @@
         const playerCard = document.getElementById('player');
         const monsterCard = document.getElementById('monster');
         const combatScreenEl = document.getElementById('combat-screen');
+        const meditationContainerEl = document.querySelector('.meditation-container');
         const monsterSelectEl = document.getElementById('monster-select');
 
         // --- 3. 遊戲核心功能 ---
+
+        function translateWeatherCode(code) {
+            const weatherMap = {
+                0: "晴天 ☀️", 1: "晴時多雲 🌤️", 2: "多雲 🌥️", 3: "陰天 ☁️",
+                45: "霧 🌫️", 48: "霧 🌫️", 51: "毛毛雨 💧", 53: "毛毛雨 💧",
+                55: "毛毛雨 💧", 61: "雨天 🌧️", 63: "大雨 🌧️", 65: "豪雨 🌧️",
+                80: "陣雨 🌦️", 81: "陣雨 🌦️", 82: "強陣雨 🌦️", 95: "雷雨 ⛈️",
+                96: "雷雨 ⛈️", 99: "雷雨 ⛈️",
+            };
+            return weatherMap[code] || "未知天氣";
+        }
+
+        function calculateExperienceGain() {
+            if (currentTemperature === null || currentHumidity === null) {
+                return 1.0; // 如果天氣資料還沒來，先給預設值
+            }
+
+            // 中庸之道規則設定
+            const OPTIMAL_TEMP_MIN = 20, OPTIMAL_TEMP_MAX = 25;
+            const BAD_TEMP_LOW = 10, BAD_TEMP_HIGH = 35;
+            const OPTIMAL_HUMID_MIN = 40, OPTIMAL_HUMID_MAX = 60;
+            const BAD_HUMID_LOW = 20, BAD_HUMID_HIGH = 80;
+
+            // 此函式計算單一變數的分數 (0.0 to 1.0)
+            function calculateBonus(value, min, max, badLow, badHigh) {
+                if (value >= min && value <= max) return 1.0; // 最佳區間
+                if (value < min && value > badLow) return (value - badLow) / (min - badLow); // 從差到最佳的爬升區間
+                if (value > max && value < badHigh) return 1.0 - ((value - max) / (badHigh - max)); // 從最佳到差的下降區間
+                return 0.0; // 最差區間
+            }
+
+            const tempBonus = calculateBonus(currentTemperature, OPTIMAL_TEMP_MIN, OPTIMAL_TEMP_MAX, BAD_TEMP_LOW, BAD_TEMP_HIGH);
+            const humidBonus = calculateBonus(currentHumidity, OPTIMAL_HUMID_MIN, OPTIMAL_HUMID_MAX, BAD_HUMID_LOW, BAD_HUMID_HIGH);
+            
+            // 基礎為 1, 溫度和濕度各貢獻 0~1 的加成, 總計範圍 1~3
+            const totalExpGain = 1 + tempBonus + humidBonus;
+            
+            return totalExpGain;
+        }
+
+
+        async function fetchWeather() {
+            // 座標設定為 台北市 信義區
+            const lat = 25.03;
+            const lon = 121.56;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('天氣API回應錯誤');
+                }
+                const data = await response.json();
+                
+                // 更新天氣全域變數
+                currentTemperature = data.current.temperature_2m;
+                currentHumidity = data.current.relative_humidity_2m;
+                const weatherCode = data.current.weather_code;
+
+                // 更新UI顯示
+                weatherLocationEl.textContent = '台北市, 信義區';
+                weatherConditionEl.textContent = translateWeatherCode(weatherCode);
+                weatherTempEl.textContent = currentTemperature;
+                weatherHumidityEl.textContent = currentHumidity;
+                
+                // 更新修煉速度顯示
+                const currentExpRate = calculateExperienceGain();
+                expRateEl.textContent = currentExpRate.toFixed(2);
+
+
+            } catch (error) {
+                console.error("無法獲取天氣資訊:", error);
+                weatherLocationEl.textContent = "無法載入天氣";
+            }
+        }
+
         function updateUI() {
+            // 更新戰鬥UI
             playerAtkEl.textContent = playerStats.atk;
             playerDefEl.textContent = playerStats.def;
             playerSpdEl.textContent = playerStats.spd;
@@ -304,6 +512,32 @@
                 monsterHealthBarEl.style.width = `${(monsterStats.hp / monsterStats.maxHp) * 100}%`;
                 monsterActionBarEl.style.width = `${(monsterStats.actionProgress / ACTION_THRESHOLD) * 100}%`;
             }
+        }
+
+        function updateCultivationUI() {
+            // 更新修煉UI，總經驗值顯示為四捨五入後的整數
+            playerExpEl.textContent = Math.round(playerExperience);
+        }
+
+        function gainExperience() {
+            const expAmount = calculateExperienceGain();
+            playerExperience += expAmount;
+            showExperienceGainIndicator(expAmount.toFixed(2));
+            updateCultivationUI();
+        }
+
+        function showExperienceGainIndicator(amount) {
+            const indicator = document.createElement('div');
+            indicator.textContent = `+${amount}`;
+            indicator.className = 'exp-indicator';
+            meditationContainerEl.appendChild(indicator);
+            
+            const xOffset = (Math.random() - 0.5) * 40;
+            indicator.style.left = `calc(50% + ${xOffset}px)`;
+            indicator.style.top = '20%';
+            indicator.style.transform = 'translateX(-50%)';
+            
+            setTimeout(() => indicator.remove(), 900);
         }
 
         function logMessage(message, color = '#e0e0e0') {
@@ -465,6 +699,9 @@
         function initGame() {
             populateMonsterSelector();
             logMessage("點擊按鈕開始自動戰鬥。");
+            setInterval(gainExperience, 1000); // 開始自動獲取經驗
+            fetchWeather(); // 遊戲載入時獲取天氣
+            setInterval(fetchWeather, 900000); // 每 15 分鐘更新一次天氣
             resetGame(); 
         }
 
