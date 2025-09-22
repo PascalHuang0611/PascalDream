@@ -11,12 +11,13 @@
             background-color: #1a1a1a;
             color: #e0e0e0;
             display: flex;
-            justify-content: center;
+            justify-content: flex-start; /* 改為左對齊以修復滾軸問題 */
             align-items: flex-start; /* 頂部對齊 */
             min-height: 100vh;
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            overflow-x: auto; /* 當內容超出螢幕寬度時，顯示水平滾軸 */
         }
 
         /* --- 主應用程式包裹容器 --- */
