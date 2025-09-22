@@ -41,7 +41,7 @@
             align-items: center;
             padding: 15px;
             box-sizing: border-box;
-            gap: 15px; /* 稍微調整間距 */
+            gap: 10px; /* 稍微調整間距 */
             flex-shrink: 0;
         }
         #cultivation-panel h2 {
@@ -72,6 +72,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
         }
         
         .meditation-container {
@@ -113,11 +114,34 @@
         .cultivation-stats {
             width: 100%;
             text-align: center;
-            font-size: 18px; /* 調整字體大小以容納新行 */
+            font-size: 14px; 
         }
          .cultivation-stats p {
-            margin: 8px 0;
+            margin: 5px 0;
         }
+        #cultivation-level-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFD700; 
+            transition: color 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        /* 後期境界光暈效果 */
+        #cultivation-level-name.late-stage-glow {
+            text-shadow: 0 0 5px #fff, 0 0 8px currentColor;
+        }
+
+        /* 大圓滿境界脈動光暈 */
+        #cultivation-level-name.perfection-glow {
+            animation: perfection-pulse 2s infinite;
+        }
+
+        @keyframes perfection-pulse {
+            0% { text-shadow: 0 0 5px #fff, 0 0 10px currentColor; }
+            50% { text-shadow: 0 0 15px #fff, 0 0 25px currentColor; }
+            100% { text-shadow: 0 0 5px #fff, 0 0 10px currentColor; }
+        }
+        
         
         /* --- 遊戲主容器 --- */
         #game-container {
@@ -211,9 +235,9 @@
         /* --- 血條/行動條樣式 --- */
         .bar-container {
             width: 100%;
-            height: 20px;
+            height: 18px;
             background-color: #1e1e1e;
-            border-radius: 10px;
+            border-radius: 9px;
             overflow: hidden;
             border: 1px solid #555;
             margin-top: 5px;
@@ -223,6 +247,7 @@
         #monster-health-bar { background-color: #f44336; }
         #player-action-bar { background-color: #00bcd4; }
         #monster-action-bar { background-color: #ff9800; }
+        #exp-progress-bar { background-color: #FFD700; }
         .hp-text { font-size: 14px; text-align: center; margin-top: 5px; font-weight: bold; }
 
         /* --- 戰鬥日誌與控制 --- */
@@ -235,14 +260,27 @@
         button:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(0,0,0,0.5); filter: brightness(1.1); }
         button:active { transform: translateY(1px); box-shadow: 0 2px 3px rgba(0,0,0,0.4); }
         button:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        #breakthrough-button.ready {
+            background: linear-gradient(145deg, #ff416c, #ff4b2b);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 65, 108, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 65, 108, 0); }
+        }
         
         /* --- 特效樣式 --- */
         .damage-indicator {
             position: absolute;
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
-            color: #ff4d4d;
-            text-shadow: 1px 1px 2px #000;
+            color: #ffffff; /* 改為白色字體 */
+            /* 新增紅色外框與黑色陰影 */
+            text-shadow: 
+                -1px -1px 0 #c00, 1px -1px 0 #c00, 
+                -1px 1px 0 #c00, 1px 1px 0 #c00, 
+                2px 2px 4px rgba(0,0,0,0.8);
             animation: floatUp 1s ease-out forwards;
             pointer-events: none;
             z-index: 10;
@@ -301,6 +339,52 @@
              100% { transform: scale(1.9); opacity: 0; }
         }
 
+        /* 渡劫成功特效 */
+        .ascension-effect {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 223, 0, 0.8) 40%, rgba(255, 215, 0, 0) 70%);
+            pointer-events: none;
+            z-index: 20;
+            animation: ascend-anim 1.2s ease-out forwards;
+        }
+        @keyframes ascend-anim {
+            0% { transform: scale(0); opacity: 1; }
+            80% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        /* 渡劫失敗特效 */
+        .lightning-effect {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 250px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 50%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+            z-index: 20;
+            clip-path: polygon(100% 0, 100% 0, 100% 12%, 42% 12%, 100% 31%, 100% 38%, 31% 38%, 100% 59%, 100% 67%, 32% 67%, 100% 91%, 100% 100%, 0 100%, 0 100%, 0 88%, 59% 88%, 0 68%, 0 61%, 69% 61%, 0 40%, 0 32%, 71% 32%, 0 10%, 0 0);
+            animation: lightning-flash 0.5s ease-out forwards;
+        }
+        @keyframes lightning-flash {
+            0%, 100% { opacity: 0; }
+            10%, 30%, 50%, 70% { opacity: 1; }
+            20%, 40%, 60%, 80% { opacity: 0; }
+        }
+
+        .screen-flash-red {
+            animation: screen-flash-anim 0.5s ease-out;
+        }
+        @keyframes screen-flash-anim {
+            0% { background-color: rgba(255, 0, 0, 0); }
+            50% { background-color: rgba(150, 0, 0, 0.5); }
+            100% { background-color: rgba(255, 0, 0, 0); }
+        }
+
     </style>
 </head>
 <body>
@@ -319,8 +403,12 @@
                 </div>
             </div>
             <div class="cultivation-stats">
-                <p>經驗值: <span id="player-exp">0</span></p>
+                <p id="cultivation-level-name">煉氣期 前期 (第1層)</p>
+                <div class="bar-container"><div id="exp-progress-bar" class="bar"></div></div>
+                <p>經驗: <span id="player-exp">0</span> / <span id="exp-required">100</span></p>
                 <p>修煉速度: <span id="exp-rate">1.00</span> 點/秒</p>
+                <p>渡劫成功率: <span id="tribulation-rate">--</span>%</p>
+                <button id="breakthrough-button" disabled>修練中...</button>
             </div>
         </div>
 
@@ -368,8 +456,10 @@
     </div>
 
 
-    <!-- 務必在主腳本之前載入怪物資料庫 -->
+    <!-- 載入設定檔 -->
     <script src="monsters.js"></script>
+    <script src="cultivation_levels.js"></script>
+
 
     <script>
         // --- 1. 初始角色數值 ---
@@ -380,6 +470,8 @@
 
         // --- 遊戲狀態變數 ---
         let playerExperience = 0;
+        let cultivationLevelIndex = 0;
+        let isAwaitingTribulation = false;
         let currentTemperature = null;
         let currentHumidity = null;
         let monsterLevel = 1;
@@ -393,8 +485,13 @@
         const weatherConditionEl = document.getElementById('weather-condition');
         const weatherTempEl = document.getElementById('weather-temp');
         const weatherHumidityEl = document.getElementById('weather-humidity');
+        const cultivationLevelNameEl = document.getElementById('cultivation-level-name');
         const playerExpEl = document.getElementById('player-exp');
+        const expRequiredEl = document.getElementById('exp-required');
+        const expProgressBarEl = document.getElementById('exp-progress-bar');
         const expRateEl = document.getElementById('exp-rate');
+        const tribulationRateEl = document.getElementById('tribulation-rate');
+        const breakthroughButton = document.getElementById('breakthrough-button');
         const playerHpTextEl = document.getElementById('player-hp-text');
         const playerAtkEl = document.getElementById('player-atk');
         const playerDefEl = document.getElementById('player-def');
@@ -431,78 +528,195 @@
         }
 
         function calculateExperienceGain() {
-            if (currentTemperature === null || currentHumidity === null) {
-                return 1.0; // 如果天氣資料還沒來，先給預設值
-            }
-
-            // 中庸之道規則設定
+            if (currentTemperature === null || currentHumidity === null) return 1.0;
             const OPTIMAL_TEMP_MIN = 20, OPTIMAL_TEMP_MAX = 25;
             const BAD_TEMP_LOW = 10, BAD_TEMP_HIGH = 35;
             const OPTIMAL_HUMID_MIN = 40, OPTIMAL_HUMID_MAX = 60;
             const BAD_HUMID_LOW = 20, BAD_HUMID_HIGH = 80;
-
-            // 此函式計算單一變數的分數 (0.0 to 1.0)
             function calculateBonus(value, min, max, badLow, badHigh) {
-                if (value >= min && value <= max) return 1.0; // 最佳區間
-                if (value < min && value > badLow) return (value - badLow) / (min - badLow); // 從差到最佳的爬升區間
-                if (value > max && value < badHigh) return 1.0 - ((value - max) / (badHigh - max)); // 從最佳到差的下降區間
-                return 0.0; // 最差區間
+                if (value >= min && value <= max) return 1.0;
+                if (value < min && value > badLow) return (value - badLow) / (min - badLow);
+                if (value > max && value < badHigh) return 1.0 - ((value - max) / (badHigh - max));
+                return 0.0;
             }
-
             const tempBonus = calculateBonus(currentTemperature, OPTIMAL_TEMP_MIN, OPTIMAL_TEMP_MAX, BAD_TEMP_LOW, BAD_TEMP_HIGH);
             const humidBonus = calculateBonus(currentHumidity, OPTIMAL_HUMID_MIN, OPTIMAL_HUMID_MAX, BAD_HUMID_LOW, BAD_HUMID_HIGH);
-            
-            // 基礎為 1, 溫度和濕度各貢獻 0~1 的加成, 總計範圍 1~3
-            const totalExpGain = 1 + tempBonus + humidBonus;
-            
-            return totalExpGain;
+            return 1 + tempBonus + humidBonus;
         }
 
-
         async function fetchWeather() {
-            // 座標設定為 台北市 信義區
-            const lat = 25.03;
-            const lon = 121.56;
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Step 1: Reverse Geocode to get location name
+                    let locationName = '未知地區';
+                    try {
+                        const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+                        const geoResponse = await fetch(geoUrl);
+                        if (!geoResponse.ok) throw new Error('Reverse geocoding API error');
+                        const geoData = await geoResponse.json();
+                        locationName = geoData.address.city || geoData.address.town || geoData.address.suburb || '您的目前位置';
+                    } catch (geoError) {
+                        console.error("無法進行反向地理編碼:", geoError);
+                    }
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error('天氣API回應錯誤');
-                }
-                const data = await response.json();
-                
-                // 更新天氣全域變數
-                currentTemperature = data.current.temperature_2m;
-                currentHumidity = data.current.relative_humidity_2m;
-                const weatherCode = data.current.weather_code;
+                    // Step 2: Fetch weather using coordinates
+                    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
+                    try {
+                        const weatherResponse = await fetch(weatherUrl);
+                        if (!weatherResponse.ok) throw new Error('天氣API回應錯誤');
+                        const weatherData = await weatherResponse.json();
+                        
+                        currentTemperature = weatherData.current.temperature_2m;
+                        currentHumidity = weatherData.current.relative_humidity_2m;
+                        
+                        weatherLocationEl.textContent = locationName;
+                        weatherConditionEl.textContent = translateWeatherCode(weatherData.current.weather_code);
+                        weatherTempEl.textContent = currentTemperature;
+                        weatherHumidityEl.textContent = currentHumidity;
+                        expRateEl.textContent = calculateExperienceGain().toFixed(2);
 
-                // 更新UI顯示
-                weatherLocationEl.textContent = '台北市, 信義區';
-                weatherConditionEl.textContent = translateWeatherCode(weatherCode);
-                weatherTempEl.textContent = currentTemperature;
-                weatherHumidityEl.textContent = currentHumidity;
-                
-                // 更新修煉速度顯示
-                const currentExpRate = calculateExperienceGain();
-                expRateEl.textContent = currentExpRate.toFixed(2);
-
-
-            } catch (error) {
-                console.error("無法獲取天氣資訊:", error);
-                weatherLocationEl.textContent = "無法載入天氣";
+                    } catch (error) {
+                        console.error("無法獲取天氣資訊:", error);
+                        weatherLocationEl.textContent = "無法載入天氣";
+                    }
+                }, (error) => {
+                    console.error("地理位置錯誤:", error);
+                    weatherLocationEl.textContent = "無法獲取您的位置";
+                });
+            } else {
+                weatherLocationEl.textContent = "瀏覽器不支援地理位置";
             }
         }
 
+        function updateCultivationUI() {
+            const currentLevelData = CULTIVATION_DATA[cultivationLevelIndex];
+            const expRequired = currentLevelData.expRequired;
+
+            cultivationLevelNameEl.textContent = currentLevelData.displayName;
+            cultivationLevelNameEl.style.color = currentLevelData.color;
+            
+            cultivationLevelNameEl.classList.remove('late-stage-glow', 'perfection-glow');
+            if (currentLevelData.stageName === "後期") {
+                cultivationLevelNameEl.classList.add('late-stage-glow');
+            } else if (currentLevelData.stageName === "大圓滿") {
+                cultivationLevelNameEl.classList.add('perfection-glow');
+            }
+
+            playerExpEl.textContent = Math.round(playerExperience);
+            expRequiredEl.textContent = isFinite(expRequired) ? expRequired : '---';
+            
+            const progress = isFinite(expRequired) ? (playerExperience / expRequired) * 100 : 100;
+            expProgressBarEl.style.width = `${Math.min(100, progress)}%`;
+
+            // 更新渡劫成功率顯示
+            if (currentLevelData.isTribulationLevel) {
+                 tribulationRateEl.textContent = (currentLevelData.tribulationSuccessRate * 100).toFixed(0);
+            } else {
+                 tribulationRateEl.textContent = '--';
+            }
+
+            // 更新渡劫按鈕狀態與文字
+            if (isAwaitingTribulation) {
+                breakthroughButton.disabled = false;
+                breakthroughButton.textContent = "渡劫";
+                breakthroughButton.classList.add('ready');
+            } else {
+                breakthroughButton.disabled = true;
+                breakthroughButton.textContent = "修練中...";
+                breakthroughButton.classList.remove('ready');
+            }
+        }
+
+        function levelUp() {
+            const oldLevelData = CULTIVATION_DATA[cultivationLevelIndex];
+            playerExperience -= oldLevelData.expRequired;
+            cultivationLevelIndex++;
+            const newLevelData = CULTIVATION_DATA[cultivationLevelIndex];
+            logMessage(`恭喜！你成功晉升到了 ${newLevelData.displayName}！`, newLevelData.color);
+        }
+
+        function playTribulationAnimation(isSuccess) {
+            const effect = document.createElement('div');
+            if (isSuccess) {
+                effect.className = 'ascension-effect';
+                meditationContainerEl.appendChild(effect);
+                setTimeout(() => effect.remove(), 1200);
+            } else {
+                effect.className = 'lightning-effect';
+                const flashOverlay = document.createElement('div');
+                flashOverlay.style.position = 'fixed';
+                flashOverlay.style.top = '0';
+                flashOverlay.style.left = '0';
+                flashOverlay.style.width = '100vw';
+                flashOverlay.style.height = '100vh';
+                flashOverlay.style.zIndex = '999';
+                flashOverlay.style.pointerEvents = 'none';
+                flashOverlay.className = 'screen-flash-red';
+                
+                document.body.appendChild(flashOverlay);
+                meditationContainerEl.appendChild(effect);
+
+                setTimeout(() => effect.remove(), 500);
+                setTimeout(() => flashOverlay.remove(), 500);
+            }
+        }
+
+        function attemptBreakthrough() {
+            if (!isAwaitingTribulation) return;
+
+            const currentLevelData = CULTIVATION_DATA[cultivationLevelIndex];
+            const successRate = currentLevelData.tribulationSuccessRate;
+            
+            if (Math.random() < successRate) {
+                // 渡劫成功
+                playTribulationAnimation(true);
+                const nextLevelData = CULTIVATION_DATA[cultivationLevelIndex + 1];
+                logMessage(`天雷淬體，渡劫成功！恭喜突破至 ${nextLevelData.displayName}！`, nextLevelData.color);
+                levelUp();
+                isAwaitingTribulation = false;
+            } else {
+                // 渡劫失敗
+                playTribulationAnimation(false);
+                const penalty = currentLevelData.expRequired * 0.20;
+                playerExperience -= penalty;
+                logMessage(`渡劫失敗，真氣逆行，損失了 ${Math.round(penalty)} 點修為...`, '#dc3545');
+                isAwaitingTribulation = false;
+            }
+            updateCultivationUI();
+        }
+
+        function gainExperience() {
+            if (isAwaitingTribulation) return; // 經驗值已滿，等待渡劫
+
+            const currentLevelData = CULTIVATION_DATA[cultivationLevelIndex];
+            const expRequired = currentLevelData.expRequired;
+            
+            const expAmount = calculateExperienceGain();
+            playerExperience += expAmount;
+            showExperienceGainIndicator(expAmount.toFixed(2));
+
+            if (playerExperience >= expRequired) {
+                if (currentLevelData.isTribulationLevel) {
+                    playerExperience = expRequired; // 將經驗值鎖定在最大值
+                    isAwaitingTribulation = true;
+                } else {
+                    levelUp();
+                }
+            }
+            updateCultivationUI();
+        }
+        
+        // --- 省略其他遊戲功能 (UI更新, 戰鬥邏輯等保持不變) ---
         function updateUI() {
-            // 更新戰鬥UI
             playerAtkEl.textContent = playerStats.atk;
             playerDefEl.textContent = playerStats.def;
             playerSpdEl.textContent = playerStats.spd;
             playerHpTextEl.textContent = `${playerStats.hp} / ${playerStats.maxHp}`;
             playerHealthBarEl.style.width = `${(playerStats.hp / playerStats.maxHp) * 100}%`;
             playerActionBarEl.style.width = `${(playerStats.actionProgress / ACTION_THRESHOLD) * 100}%`;
-            
             if (monsterStats.name) {
                 monsterNameEl.textContent = `${monsterStats.name} Lv.${monsterLevel}`;
                 monsterAtkEl.textContent = monsterStats.atk;
@@ -513,33 +727,17 @@
                 monsterActionBarEl.style.width = `${(monsterStats.actionProgress / ACTION_THRESHOLD) * 100}%`;
             }
         }
-
-        function updateCultivationUI() {
-            // 更新修煉UI，總經驗值顯示為四捨五入後的整數
-            playerExpEl.textContent = Math.round(playerExperience);
-        }
-
-        function gainExperience() {
-            const expAmount = calculateExperienceGain();
-            playerExperience += expAmount;
-            showExperienceGainIndicator(expAmount.toFixed(2));
-            updateCultivationUI();
-        }
-
         function showExperienceGainIndicator(amount) {
             const indicator = document.createElement('div');
             indicator.textContent = `+${amount}`;
             indicator.className = 'exp-indicator';
             meditationContainerEl.appendChild(indicator);
-            
             const xOffset = (Math.random() - 0.5) * 40;
             indicator.style.left = `calc(50% + ${xOffset}px)`;
             indicator.style.top = '20%';
             indicator.style.transform = 'translateX(-50%)';
-            
             setTimeout(() => indicator.remove(), 900);
         }
-
         function logMessage(message, color = '#e0e0e0') {
             if (combatLog.children.length > 100) { combatLog.removeChild(combatLog.lastChild); }
             const p = document.createElement('p');
@@ -547,7 +745,6 @@
             p.style.color = color;
             combatLog.prepend(p);
         }
-
         function showDamageIndicator(targetCard, damage) {
             const indicator = document.createElement('div');
             indicator.textContent = `-${damage}`;
@@ -558,7 +755,6 @@
             indicator.style.top = `${targetCard.offsetTop}px`;
             setTimeout(() => indicator.remove(), 900);
         }
-
         function playAttackAnimation(targetCard, type) {
             const effect = document.createElement('div');
             effect.className = type === 'slash' ? 'slash-effect' : 'impact-effect';
@@ -567,7 +763,6 @@
             effect.style.top = `${targetCard.offsetTop + targetCard.offsetHeight / 2 - effect.offsetHeight / 2}px`;
             setTimeout(() => effect.remove(), 350);
         }
-
         function spawnNextMonster() {
             monsterLevel++;
             logMessage(`遭遇新的敵人！`, '#FFD700');
@@ -577,7 +772,6 @@
             monsterStats = { ...monsterData, hp: monsterData.maxHp, actionProgress: 0, };
             monsterSelectEl.value = monsterIndex;
         }
-        
         function gameLoop() {
             if (!isGameRunning) return;
             const fasterSpd = Math.max(playerStats.spd, monsterStats.spd);
@@ -589,7 +783,6 @@
             const monsterProgressGain = baseProgressGain * (monsterStats.spd / fasterSpd);
             playerStats.actionProgress += playerProgressGain;
             monsterStats.actionProgress += monsterProgressGain;
-
             if (playerStats.actionProgress >= ACTION_THRESHOLD) {
                 playerStats.actionProgress -= ACTION_THRESHOLD;
                 let damage = Math.max(0, playerStats.atk - monsterStats.def);
@@ -608,7 +801,6 @@
                     spawnNextMonster();
                 }
             }
-
             if (monsterStats.actionProgress >= ACTION_THRESHOLD) {
                  if (monsterStats.hp > 0) {
                     monsterStats.actionProgress -= ACTION_THRESHOLD;
@@ -637,7 +829,6 @@
             }
             updateUI();
         }
-
         function toggleCombat() {
             isGameRunning = !isGameRunning;
             if (isGameRunning) {
@@ -649,38 +840,34 @@
         }
         
         function resetGame() {
+            playerExperience = 0;
+            cultivationLevelIndex = 0;
+            isAwaitingTribulation = false;
             startSpecificMonsterFight(0);
+            updateCultivationUI();
         }
         
         function startSpecificMonsterFight(monsterIndex) {
             isGameRunning = false;
             if (gameInterval) clearInterval(gameInterval);
             gameInterval = null;
-
             monsterLevel = monsterIndex + 1;
             playerStats = { ...initialPlayerStats, actionProgress: 0 };
-
             const selectedMonsterData = MONSTERS_DATABASE[monsterIndex];
-            monsterStats = {
-                ...selectedMonsterData,
-                hp: selectedMonsterData.maxHp,
-                actionProgress: 0,
-            };
-
+            monsterStats = { ...selectedMonsterData, hp: selectedMonsterData.maxHp, actionProgress: 0 };
             combatLog.innerHTML = "";
             logMessage(`測試戰鬥開始！對手: ${monsterStats.name}`);
-
             startPauseButton.textContent = '開始戰鬥';
             startPauseButton.style.display = 'block';
             restartButton.style.display = 'none';
             monsterSelectEl.value = monsterIndex;
-            
             updateUI();
         }
 
         // --- 4. 設定事件監聽 ---
         startPauseButton.addEventListener('click', toggleCombat);
         restartButton.addEventListener('click', resetGame);
+        breakthroughButton.addEventListener('click', attemptBreakthrough);
         monsterSelectEl.addEventListener('change', (event) => {
             const selectedIndex = parseInt(event.target.value, 10);
             startSpecificMonsterFight(selectedIndex);
