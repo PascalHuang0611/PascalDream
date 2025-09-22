@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自動戰鬥遊戲</title>
+    <style>
+        /* --- 整體頁面樣式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 頂部對齊 */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- 主應用程式包裹容器 --- */
+        #app-wrapper {
+            display: flex;
+            flex-direction: row; /* 始終保持水平排列 */
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        /* --- 遊戲主容器 --- */
+        #game-container {
+            width: 850px; /* 固定寬度以維持版面 */
+            height: 700px;
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+            gap: 15px;
+            flex-shrink: 0; /* 防止容器被壓縮 */
+        }
+
+        /* 戰鬥畫面容器 */
+        #combat-screen {
+            flex-grow: 1;
+            position: relative;
+            min-height: 250px;
+            background-color: #333; 
+            border: 1px solid #4f4f4f; 
+            border-radius: 10px;      
+        }
+
+        /* --- 測試控制項 --- */
+        #test-controls {
+            padding: 15px;
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 200px;
+            flex-shrink: 0; /* 防止此容器也被壓縮 */
+        }
+        #test-controls label {
+            font-weight: bold;
+            color: #ffa500;
+        }
+        #test-controls select {
+            padding: 8px;
+            background-color: #3c3c3c;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+
+        /* 畫面震動攻擊特效 */
+        .screen-shake {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* --- 角色卡片通用樣式 --- */
+        .character-card {
+            width: 200px;
+            padding: 15px;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            position: absolute; 
+            transition: transform 0.2s ease;
+        }
+
+        .character-card h2 {
+            margin-top: 0;
+            color: #ffa500;
+        }
+
+        .character-card.attacking {
+            transform: scale(1.1);
+        }
+
+        #player { bottom: 20px; left: 20px; }
+        #monster { top: 20px; right: 20px; }
+
+        /* --- 血條/行動條樣式 --- */
+        .bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #555;
+            margin-top: 5px;
+        }
+        .bar { height: 100%; border-radius: 8px; transition: width 0.1s linear; }
+        #player-health-bar { background-color: #4caf50; }
+        #monster-health-bar { background-color: #f44336; }
+        #player-action-bar { background-color: #00bcd4; }
+        #monster-action-bar { background-color: #ff9800; }
+        .hp-text { font-size: 14px; text-align: center; margin-top: 5px; font-weight: bold; }
+
+        /* --- 戰鬥日誌與控制 --- */
+        #controls { display: flex; flex-direction: column; align-items: center; gap: 15px; flex-shrink: 0; }
+        #combat-log { width: 100%; height: 140px; background-color: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; overflow-y: auto; border-radius: 8px; font-family: monospace; font-size: 14px; box-sizing: border-box; flex-shrink: 0; }
+        #combat-log p { margin: 0 0 5px 0; padding: 0; color: #ddd; }
+
+        /* --- 按鈕樣式 --- */
+        button { padding: 12px 25px; font-size: 18px; font-weight: bold; color: white; background: linear-gradient(145deg, #ff8c00, #ffa500); border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.4); transition: all 0.2s ease; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(0,0,0,0.5); filter: brightness(1.1); }
+        button:active { transform: translateY(1px); box-shadow: 0 2px 3px rgba(0,0,0,0.4); }
+        button:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        /* --- 特效樣式 --- */
+        .damage-indicator {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4d4d;
+            text-shadow: 1px 1px 2px #000;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes floatUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-60px); }
+        }
+
+        .slash-effect {
+            position: absolute;
+            width: 100px;
+            height: 120px;
+            pointer-events: none;
+            z-index: 10;
+            animation: slash-anim 0.3s ease-out forwards;
+        }
+        .slash-effect::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent 45%, white 48%, white 52%, transparent 55%);
+            transform: rotate(10deg);
+        }
+        @keyframes slash-anim {
+            0% { transform: scale(0) rotate(0); opacity: 0; }
+            50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1.2) rotate(20deg); opacity: 0; }
+        }
+        
+        .impact-effect {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 215, 0, 0.8) 30%, rgba(255, 165, 0, 0) 65%);
+            animation: impact-anim 0.35s ease-out forwards;
+        }
+        @keyframes impact-anim {
+             0% { transform: scale(0.5); opacity: 1; }
+             80% { transform: scale(1.6); opacity: 0.5; }
+             100% { transform: scale(1.9); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app-wrapper">
+        <div id="game-container">
+            <!-- 戰鬥畫面 -->
+            <div id="combat-screen">
+                <!-- 怪物顯示區 -->
+                <div id="monster" class="character-card">
+                    <h2 id="monster-name"></h2>
+                    <p>生命:</p>
+                    <div class="bar-container"><div id="monster-health-bar" class="bar"></div></div>
+                    <p class="hp-text" id="monster-hp-text"></p>
+                    <p>行動條:</p>
+                    <div class="bar-container"><div id="monster-action-bar" class="bar"></div></div>
+                    <p>攻擊: <span id="monster-atk"></span> | 防禦: <span id="monster-def"></span> | 速度: <span id="monster-spd"></span></p>
+                </div>
+
+                <!-- 玩家顯示區 -->
+                <div id="player" class="character-card">
+                    <h2>玩家</h2>
+                    <p>生命:</p>
+                    <div class="bar-container"><div id="player-health-bar" class="bar"></div></div>
+                    <p class="hp-text" id="player-hp-text"></p>
+                    <p>行動條:</p>
+                    <div class="bar-container"><div id="player-action-bar" class="bar"></div></div>
+                    <p>攻擊: <span id="player-atk"></span> | 防禦: <span id="player-def"></span> | 速度: <span id="player-spd"></span></p>
+                </div>
+            </div>
+
+            <!-- 戰鬥日誌 -->
+            <div id="combat-log"></div>
+
+            <!-- 控制按鈕 -->
+            <div id="controls">
+                <button id="start-pause-button">開始戰鬥</button>
+                <button id="restart-button" style="display: none;">重新開始</button>
+            </div>
+        </div>
+
+        <!-- 測試用控制項 -->
+        <div id="test-controls">
+            <label for="monster-select">選擇測試怪物:</label>
+            <select id="monster-select"></select>
+        </div>
+    </div>
+
+
+    <!-- 務必在主腳本之前載入怪物資料庫 -->
+    <script src="monsters.js"></script>
+
+    <script>
+        // --- 1. 初始角色數值 ---
+        const initialPlayerStats = { name: "玩家", maxHp: 100, hp: 100, atk: 20, def: 5, spd: 20 };
+        
+        let playerStats = { ...initialPlayerStats, actionProgress: 0 };
+        let monsterStats = {}; // 初始化為空物件，將由 resetGame 填入
+
+        // --- 遊戲狀態變數 ---
+        let monsterLevel = 1;
+        let isGameRunning = false;
+        let gameInterval = null;
+        const ACTION_THRESHOLD = 1000;
+        const TICK_RATE = 50;
+
+        // --- 2. 獲取 HTML 元素 ---
+        const playerHpTextEl = document.getElementById('player-hp-text');
+        const playerAtkEl = document.getElementById('player-atk');
+        const playerDefEl = document.getElementById('player-def');
+        const playerSpdEl = document.getElementById('player-spd');
+        const playerHealthBarEl = document.getElementById('player-health-bar');
+        const playerActionBarEl = document.getElementById('player-action-bar');
+        const monsterNameEl = document.getElementById('monster-name');
+        const monsterHpTextEl = document.getElementById('monster-hp-text');
+        const monsterAtkEl = document.getElementById('monster-atk');
+        const monsterDefEl = document.getElementById('monster-def');
+        const monsterSpdEl = document.getElementById('monster-spd');
+        const monsterHealthBarEl = document.getElementById('monster-health-bar');
+        const monsterActionBarEl = document.getElementById('monster-action-bar');
+        const startPauseButton = document.getElementById('start-pause-button');
+        const restartButton = document.getElementById('restart-button');
+        const combatLog = document.getElementById('combat-log');
+        const playerCard = document.getElementById('player');
+        const monsterCard = document.getElementById('monster');
+        const combatScreenEl = document.getElementById('combat-screen');
+        const monsterSelectEl = document.getElementById('monster-select');
+
+        // --- 3. 遊戲核心功能 ---
+        function updateUI() {
+            playerAtkEl.textContent = playerStats.atk;
+            playerDefEl.textContent = playerStats.def;
+            playerSpdEl.textContent = playerStats.spd;
+            playerHpTextEl.textContent = `${playerStats.hp} / ${playerStats.maxHp}`;
+            playerHealthBarEl.style.width = `${(playerStats.hp / playerStats.maxHp) * 100}%`;
+            playerActionBarEl.style.width = `${(playerStats.actionProgress / ACTION_THRESHOLD) * 100}%`;
+            
+            if (monsterStats.name) {
+                monsterNameEl.textContent = `${monsterStats.name} Lv.${monsterLevel}`;
+                monsterAtkEl.textContent = monsterStats.atk;
+                monsterDefEl.textContent = monsterStats.def;
+                monsterSpdEl.textContent = monsterStats.spd;
+                monsterHpTextEl.textContent = `${monsterStats.hp} / ${monsterStats.maxHp}`;
+                monsterHealthBarEl.style.width = `${(monsterStats.hp / monsterStats.maxHp) * 100}%`;
+                monsterActionBarEl.style.width = `${(monsterStats.actionProgress / ACTION_THRESHOLD) * 100}%`;
+            }
+        }
+
+        function logMessage(message, color = '#e0e0e0') {
+            if (combatLog.children.length > 100) { combatLog.removeChild(combatLog.lastChild); }
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.style.color = color;
+            combatLog.prepend(p);
+        }
+
+        function showDamageIndicator(targetCard, damage) {
+            const indicator = document.createElement('div');
+            indicator.textContent = `-${damage}`;
+            indicator.className = 'damage-indicator';
+            combatScreenEl.appendChild(indicator);
+            const xOffset = (Math.random() - 0.5) * 40;
+            indicator.style.left = `${targetCard.offsetLeft + targetCard.offsetWidth / 2 - indicator.offsetWidth / 2 + xOffset}px`;
+            indicator.style.top = `${targetCard.offsetTop}px`;
+            setTimeout(() => indicator.remove(), 900);
+        }
+
+        function playAttackAnimation(targetCard, type) {
+            const effect = document.createElement('div');
+            effect.className = type === 'slash' ? 'slash-effect' : 'impact-effect';
+            combatScreenEl.appendChild(effect);
+            effect.style.left = `${targetCard.offsetLeft + targetCard.offsetWidth / 2 - effect.offsetWidth / 2}px`;
+            effect.style.top = `${targetCard.offsetTop + targetCard.offsetHeight / 2 - effect.offsetHeight / 2}px`;
+            setTimeout(() => effect.remove(), 350);
+        }
+
+        function spawnNextMonster() {
+            monsterLevel++;
+            logMessage(`遭遇新的敵人！`, '#FFD700');
+            playerStats.hp = playerStats.maxHp;
+            const monsterIndex = (monsterLevel - 1) % MONSTERS_DATABASE.length;
+            const monsterData = MONSTERS_DATABASE[monsterIndex];
+            monsterStats = { ...monsterData, hp: monsterData.maxHp, actionProgress: 0, };
+            monsterSelectEl.value = monsterIndex;
+        }
+        
+        function gameLoop() {
+            if (!isGameRunning) return;
+            const fasterSpd = Math.max(playerStats.spd, monsterStats.spd);
+            if (fasterSpd <= 0) return;
+            const desiredAttackTimeMs = 1000;
+            const ticksToAttackForFaster = desiredAttackTimeMs / TICK_RATE; 
+            const baseProgressGain = ACTION_THRESHOLD / ticksToAttackForFaster; 
+            const playerProgressGain = baseProgressGain * (playerStats.spd / fasterSpd);
+            const monsterProgressGain = baseProgressGain * (monsterStats.spd / fasterSpd);
+            playerStats.actionProgress += playerProgressGain;
+            monsterStats.actionProgress += monsterProgressGain;
+
+            if (playerStats.actionProgress >= ACTION_THRESHOLD) {
+                playerStats.actionProgress -= ACTION_THRESHOLD;
+                let damage = Math.max(0, playerStats.atk - monsterStats.def);
+                monsterStats.hp = Math.max(0, monsterStats.hp - damage);
+                logMessage(`你對 ${monsterStats.name} 造成了 ${damage} 點傷害。`, '#87CEFA');
+                showDamageIndicator(monsterCard, damage);
+                playAttackAnimation(monsterCard, 'slash');
+                monsterCard.classList.add('attacking');
+                combatScreenEl.classList.add('screen-shake');
+                setTimeout(() => {
+                    monsterCard.classList.remove('attacking');
+                    combatScreenEl.classList.remove('screen-shake');
+                }, 300);
+                if (monsterStats.hp <= 0) {
+                    logMessage(`你擊敗了 ${monsterStats.name}！`, '#90EE90');
+                    spawnNextMonster();
+                }
+            }
+
+            if (monsterStats.actionProgress >= ACTION_THRESHOLD) {
+                 if (monsterStats.hp > 0) {
+                    monsterStats.actionProgress -= ACTION_THRESHOLD;
+                    let damage = Math.max(0, monsterStats.atk - playerStats.def);
+                    playerStats.hp = Math.max(0, playerStats.hp - damage);
+                    logMessage(`${monsterStats.name} 對你造成了 ${damage} 點傷害。`, '#F08080');
+                    showDamageIndicator(playerCard, damage);
+                    playAttackAnimation(playerCard, 'impact');
+                    playerCard.classList.add('attacking');
+                    combatScreenEl.classList.add('screen-shake');
+                    setTimeout(() => {
+                        playerCard.classList.remove('attacking');
+                        combatScreenEl.classList.remove('screen-shake');
+                    }, 300);
+                    if (playerStats.hp <= 0) {
+                        logMessage('你被擊敗了... 遊戲結束。', '#DC143C');
+                        isGameRunning = false;
+                        clearInterval(gameInterval);
+                        gameInterval = null;
+                        startPauseButton.style.display = 'none';
+                        restartButton.style.display = 'block';
+                    }
+                } else {
+                    monsterStats.actionProgress = 0;
+                }
+            }
+            updateUI();
+        }
+
+        function toggleCombat() {
+            isGameRunning = !isGameRunning;
+            if (isGameRunning) {
+                startPauseButton.textContent = '暫停戰鬥';
+                if (!gameInterval) { gameInterval = setInterval(gameLoop, TICK_RATE); }
+            } else {
+                startPauseButton.textContent = '繼續戰鬥';
+            }
+        }
+        
+        function resetGame() {
+            startSpecificMonsterFight(0);
+        }
+        
+        function startSpecificMonsterFight(monsterIndex) {
+            isGameRunning = false;
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = null;
+
+            monsterLevel = monsterIndex + 1;
+            playerStats = { ...initialPlayerStats, actionProgress: 0 };
+
+            const selectedMonsterData = MONSTERS_DATABASE[monsterIndex];
+            monsterStats = {
+                ...selectedMonsterData,
+                hp: selectedMonsterData.maxHp,
+                actionProgress: 0,
+            };
+
+            combatLog.innerHTML = "";
+            logMessage(`測試戰鬥開始！對手: ${monsterStats.name}`);
+
+            startPauseButton.textContent = '開始戰鬥';
+            startPauseButton.style.display = 'block';
+            restartButton.style.display = 'none';
+            monsterSelectEl.value = monsterIndex;
+            
+            updateUI();
+        }
+
+        // --- 4. 設定事件監聽 ---
+        startPauseButton.addEventListener('click', toggleCombat);
+        restartButton.addEventListener('click', resetGame);
+        monsterSelectEl.addEventListener('change', (event) => {
+            const selectedIndex = parseInt(event.target.value, 10);
+            startSpecificMonsterFight(selectedIndex);
+        });
+
+        // --- 5. 遊戲初始化 ---
+        function populateMonsterSelector() {
+            MONSTERS_DATABASE.forEach((monster, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = monster.name;
+                monsterSelectEl.appendChild(option);
+            });
+        }
+
+        function initGame() {
+            populateMonsterSelector();
+            logMessage("點擊按鈕開始自動戰鬥。");
+            resetGame(); 
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
+
