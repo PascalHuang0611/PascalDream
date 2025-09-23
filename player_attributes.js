@@ -21,6 +21,7 @@ const ATTRIBUTE_EFFECTS = {
     strength_to_atk: 1,       // 1 力量 = 1 攻擊力
     agility_to_spd: 0.2,      // 1 敏捷 = 0.2 速度
     constitution_to_def: 0.5, // 1 體質 = 0.5 防禦力
+    intelligence_to_exp_rate: 0.01 // 每點智力提升 1% 修煉速度
 };
 
 // 升級時獲得的生命值
