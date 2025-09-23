@@ -623,7 +623,7 @@
                     <div class="pet-container">
                         <img src="./pet_image.png" alt="寵物" class="pet-img" onerror="this.style.display='none'">
                         <div class="pet-name-container">
-                            <span id="pet-name">于庭</span>
+                            <span id="pet-name">豬豬</span>
                             <span id="edit-pet-name">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                             </span>
@@ -707,12 +707,13 @@
         // --- 1. 初始角色數值 ---
         const PET_NORMAL_IMAGE = './pet_image.png';
         const PET_CRY_IMAGE = './pet_image_cry.png'; // 寵物哭泣的圖片路徑
-        const GAME_VERSION = '1.1'; // 遊戲版本，用於處理舊存檔
+        const GAME_VERSION = '1.2'; // 更新版本號以包含寵物名字
         const SAVE_KEY = 'cultivationGameSave';
         
         let playerStats = { ...initialPlayerStats, actionProgress: 0 };
         let playerAttributes = { ...initialPlayerAttributes };
-        let monsterStats = {}; // 初始化為空物件，將由 resetGame 填入
+        let monsterStats = {}; 
+        let petName = "豬豬";
 
         // --- 遊戲狀態變數 ---
         let playerExperience = 0;
@@ -724,7 +725,7 @@
         let monsterLevel = 1;
         let isGameRunning = false;
         let gameInterval = null;
-        let petCryTimeout = null; // 用於控制寵物圖片恢復的計時器
+        let petCryTimeout = null; 
         const ACTION_THRESHOLD = 1000;
         const TICK_RATE = 50;
 
@@ -762,6 +763,7 @@
         const meditationContainerEl = document.querySelector('.meditation-container');
         const monsterSelectEl = document.getElementById('monster-select');
         const petImgEl = document.querySelector('.pet-img');
+        const petNameEl = document.getElementById('pet-name');
         const editPetNameEl = document.getElementById('edit-pet-name');
         const customAlertOverlay = document.getElementById('custom-alert-overlay');
         const customAlertMessage = document.getElementById('custom-alert-message');
@@ -790,6 +792,7 @@
                 playerExperience: playerExperience,
                 playerAttributes: playerAttributes,
                 totalHpBonusFromLevels: totalHpBonusFromLevels,
+                petName: petName,
             };
             localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
         }
@@ -810,6 +813,8 @@
                 playerExperience = parsedData.playerExperience;
                 playerAttributes = parsedData.playerAttributes;
                 totalHpBonusFromLevels = parsedData.totalHpBonusFromLevels;
+                petName = parsedData.petName || '豬豬';
+                petNameEl.textContent = petName;
                 
                 logMessage('成功讀取進度。');
                 return true;
@@ -935,20 +940,24 @@
         }
 
         function calculateBaseExpRate() {
-            if (currentTemperature === null || currentHumidity === null) return 1.0;
+            if (currentTemperature === null || currentHumidity === null) return BASE_EXP_GAINS.auto_gain_per_second;
+            
             const OPTIMAL_TEMP_MIN = 20, OPTIMAL_TEMP_MAX = 25;
             const BAD_TEMP_LOW = 10, BAD_TEMP_HIGH = 35;
             const OPTIMAL_HUMID_MIN = 40, OPTIMAL_HUMID_MAX = 60;
             const BAD_HUMID_LOW = 20, BAD_HUMID_HIGH = 80;
-            function calculateBonus(value, min, max, badLow, badHigh) {
-                if (value >= min && value <= max) return 1.0;
-                if (value < min && value > badLow) return (value - badLow) / (min - badLow);
-                if (value > max && value < badHigh) return 1.0 - ((value - max) / (badHigh - max));
+
+            function calculateBonus(value, min, max, badLow, badHigh, maxBonus) {
+                if (value >= min && value <= max) return maxBonus;
+                if (value < min && value > badLow) return ((value - badLow) / (min - badLow)) * maxBonus;
+                if (value > max && value < badHigh) return (1.0 - ((value - max) / (badHigh - max))) * maxBonus;
                 return 0.0;
             }
-            const tempBonus = calculateBonus(currentTemperature, OPTIMAL_TEMP_MIN, OPTIMAL_TEMP_MAX, BAD_TEMP_LOW, BAD_TEMP_HIGH);
-            const humidBonus = calculateBonus(currentHumidity, OPTIMAL_HUMID_MIN, OPTIMAL_HUMID_MAX, BAD_HUMID_LOW, BAD_HUMID_HIGH);
-            return 1 + tempBonus + humidBonus;
+
+            const tempBonus = calculateBonus(currentTemperature, OPTIMAL_TEMP_MIN, OPTIMAL_TEMP_MAX, BAD_TEMP_LOW, BAD_TEMP_HIGH, BASE_EXP_GAINS.max_temp_bonus);
+            const humidBonus = calculateBonus(currentHumidity, OPTIMAL_HUMID_MIN, OPTIMAL_HUMID_MAX, BAD_HUMID_LOW, BAD_HUMID_HIGH, BASE_EXP_GAINS.max_humidity_bonus);
+            
+            return BASE_EXP_GAINS.auto_gain_per_second + tempBonus + humidBonus;
         }
 
         function getIntelligenceBonus() {
@@ -1205,7 +1214,7 @@
         function handlePetClick() {
             if (isAwaitingTribulation) return;
 
-            const expAmount = 1 * getIntelligenceBonus();
+            const expAmount = BASE_EXP_GAINS.pet_click_gain * getIntelligenceBonus();
             playerExperience += expAmount;
             showPetExperienceGainIndicator(expAmount.toFixed(2));
             checkLevelUp(); 
@@ -1365,6 +1374,8 @@
             totalHpBonusFromLevels = 0;
             isAwaitingTribulation = false;
             playerAttributes = { ...initialPlayerAttributes };
+            petName = '豬豬';
+            petNameEl.textContent = petName;
             
             startSpecificMonsterFight(0);
 
@@ -1403,7 +1414,22 @@
         });
         petImgEl.addEventListener('click', handlePetClick);
         editPetNameEl.addEventListener('click', () => {
-            showCustomAlert('想改名? 求我啊~~');
+            const newName = prompt('請為您的寵物取新名字:', petName);
+            if (newName && newName.trim()) {
+                const forbidden = ['培', '根', '豬'];
+                let matchCount = 0;
+                if (newName.includes('培')) matchCount++;
+                if (newName.includes('根')) matchCount++;
+                if (newName.includes('豬')) matchCount++;
+
+                if (matchCount >= 2) {
+                    showCustomAlert('想幹嘛，不給你改~~');
+                } else {
+                    petName = newName.trim();
+                    petNameEl.textContent = petName;
+                    saveGame();
+                }
+            }
         });
         customAlertClose.addEventListener('click', hideCustomAlert);
         customAlertOverlay.addEventListener('click', (event) => {
