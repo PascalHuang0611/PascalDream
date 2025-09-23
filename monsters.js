@@ -4,7 +4,7 @@
 
 const MONSTERS_DATABASE = [
   {
-    name: "史萊姆",
+    name: "于廷小廢物",
     maxHp: 80,
     atk: 10,
     def: 3,
@@ -172,4 +172,5 @@ const MONSTERS_DATABASE = [
     isTestMonster: true
   }
 ];
+
 
