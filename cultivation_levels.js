@@ -24,17 +24,17 @@ function lightenHexColor(hex, percent) {
 // 基礎設定，定義每個大境界的基礎顏色
 const REALM_DEFINITIONS = [
     { name: "煉氣期", baseExp: 10, successRate: 0.95, color: "#9E9E9E" }, // 灰色
-    { name: "築基期", baseExp: 10, successRate: 0.90, color: "#E0E0E0" }, // 白色
-    { name: "結丹期", baseExp: 10, successRate: 0.85, color: "#A5D6A7" }, // 綠色
-    { name: "元嬰期", baseExp: 10, successRate: 0.80, color: "#90CAF9" }, // 藍色
-    { name: "化神期", baseExp: 10, successRate: 0.70, color: "#CE93D8" }, // 紫色
-    { name: "煉虛期", baseExp: 10, successRate: 0.60, color: "#FFCC80" }, // 橙色
-    { name: "合體期", baseExp: 10, successRate: 0.50, color: "#FFB74D" }, // 深橙
-    { name: "大乘期", baseExp: 10, successRate: 0.40, color: "#FF8A65" }, // 橘紅
-    { name: "渡劫期", baseExp: 10, successRate: 0.30, color: "#E57373" }, // 紅色
-    { name: "真仙境", baseExp: 10, successRate: 0.25, color: "#4DD0E1" }, // 青色
-    { name: "金仙境", baseExp: 10, successRate: 0.20, color: "#4DB6AC" }, // 藍綠
-    { name: "太乙境", baseExp: 10, successRate: 0.15, color: "#F06292" }, // 粉色
+    { name: "築基期", baseExp: 100, successRate: 0.90, color: "#E0E0E0" }, // 白色
+    { name: "結丹期", baseExp: 500, successRate: 0.85, color: "#A5D6A7" }, // 綠色
+    { name: "元嬰期", baseExp: 2500, successRate: 0.80, color: "#90CAF9" }, // 藍色
+    { name: "化神期", baseExp: 10000, successRate: 0.70, color: "#CE93D8" }, // 紫色
+    { name: "煉虛期", baseExp: 50000, successRate: 0.60, color: "#FFCC80" }, // 橙色
+    { name: "合體期", baseExp: 200000, successRate: 0.50, color: "#FFB74D" }, // 深橙
+    { name: "大乘期", baseExp: 1000000, successRate: 0.40, color: "#FF8A65" }, // 橘紅
+    { name: "渡劫期", baseExp: 5000000, successRate: 0.30, color: "#E57373" }, // 紅色
+    { name: "真仙境", baseExp: 20000000, successRate: 0.25, color: "#4DD0E1" }, // 青色
+    { name: "金仙境", baseExp: 100000000, successRate: 0.20, color: "#4DB6AC" }, // 藍綠
+    { name: "太乙境", baseExp: 500000000, successRate: 0.15, color: "#F06292" }, // 粉色
     { name: "道祖境", baseExp: Infinity, successRate: 0.10, color: "#FFD700" }  // 金色
 ];
 
@@ -67,7 +67,8 @@ REALM_DEFINITIONS.forEach((realm, realmIndex) => {
             isTribulationLevel = true;
         }
 
-        const expRequired = Math.floor(realm.baseExp * Math.pow(1.0, layer - 1));
+        // 恢復為原本的測試用經驗值公式
+        const expRequired = Math.floor(realm.baseExp * Math.pow(1.2, layer - 1));
 
         let successRate = realm.successRate;
         if (layer === 13 && realmIndex + 1 < REALM_DEFINITIONS.length) {
@@ -75,6 +76,7 @@ REALM_DEFINITIONS.forEach((realm, realmIndex) => {
         }
 
         CULTIVATION_DATA.push({
+            realmIndex: realmIndex, // 新增：大境界的索引，用於判斷光球數量
             realmName: realm.name,
             stageName: stageName,
             layer: layer,
