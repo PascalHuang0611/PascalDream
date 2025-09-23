@@ -554,11 +554,12 @@
 
 
     <!-- 載入設定檔 (加入版本號 ?v=1.2 來避免快取問題) -->
-    <script src="monsters.js?v=1.0"></script>
-    <script src="cultivation_levels.js?v=1.2"></script>
+    <script src="monsters.js?v=1.0" defer></script>
+    <script src="cultivation_levels.js?v=1.2" defer></script>
 
 
     <script>
+    document.addEventListener('DOMContentLoaded', () => {
         // --- 1. 初始角色數值 ---
         const initialPlayerStats = { name: "玩家", maxHp: 100, hp: 100, atk: 20, def: 5, spd: 20 };
         const PET_NORMAL_IMAGE = './pet_image.png';
@@ -1083,6 +1084,7 @@
         }
 
         initGame();
+    });
     </script>
 </body>
 </html>
