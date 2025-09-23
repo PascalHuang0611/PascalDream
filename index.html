@@ -93,7 +93,8 @@
         .attribute-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px; /* 縮小按鈕間距 */
+            transform: translateX(30px);
         }
         .attribute-value {
             width: 2em;
@@ -124,6 +125,10 @@
         }
         .remove-point-btn {
             background-color: #f44336;
+        }
+        .max-point-btn {
+            background-color: #2196F3;
+            font-size: 14px;
         }
         .point-btn:disabled {
             background-color: #333;
@@ -582,6 +587,7 @@
                             <button class="point-btn remove-point-btn" data-stat="strength">-</button>
                             <span id="strength-value" class="attribute-value">0</span>
                             <button class="point-btn add-point-btn" data-stat="strength">+</button>
+                            <button class="point-btn max-point-btn" data-stat="strength">++</button>
                         </div>
                     </div>
                     <div class="attribute-row">
@@ -590,6 +596,7 @@
                             <button class="point-btn remove-point-btn" data-stat="agility">-</button>
                             <span id="agility-value" class="attribute-value">0</span>
                             <button class="point-btn add-point-btn" data-stat="agility">+</button>
+                            <button class="point-btn max-point-btn" data-stat="agility">++</button>
                         </div>
                     </div>
                     <div class="attribute-row">
@@ -598,6 +605,7 @@
                             <button class="point-btn remove-point-btn" data-stat="constitution">-</button>
                             <span id="constitution-value" class="attribute-value">0</span>
                             <button class="point-btn add-point-btn" data-stat="constitution">+</button>
+                            <button class="point-btn max-point-btn" data-stat="constitution">++</button>
                         </div>
                     </div>
                     <div class="attribute-row">
@@ -606,6 +614,7 @@
                             <button class="point-btn remove-point-btn" data-stat="intelligence">-</button>
                             <span id="intelligence-value" class="attribute-value">0</span>
                             <button class="point-btn add-point-btn" data-stat="intelligence">+</button>
+                            <button class="point-btn max-point-btn" data-stat="intelligence">++</button>
                         </div>
                     </div>
                 </div>
@@ -767,6 +776,7 @@
         const intelligenceValueEl = document.getElementById('intelligence-value');
         const addPointBtns = document.querySelectorAll('.add-point-btn');
         const removePointBtns = document.querySelectorAll('.remove-point-btn');
+        const maxPointBtns = document.querySelectorAll('.max-point-btn');
         const resetAttributesBtn = document.getElementById('reset-attributes-btn');
 
 
@@ -833,9 +843,10 @@
             constitutionValueEl.textContent = playerAttributes.constitution;
             intelligenceValueEl.textContent = playerAttributes.intelligence;
 
-            addPointBtns.forEach(btn => {
-                btn.disabled = playerAttributes.assignablePoints <= 0;
-            });
+            const hasPoints = playerAttributes.assignablePoints > 0;
+            addPointBtns.forEach(btn => btn.disabled = !hasPoints);
+            maxPointBtns.forEach(btn => btn.disabled = !hasPoints);
+
             removePointBtns.forEach(btn => {
                 const stat = btn.dataset.stat;
                 btn.disabled = playerAttributes[stat] <= initialPlayerAttributes[stat];
@@ -867,6 +878,7 @@
             playerStats.hp = Math.min(playerStats.hp, playerStats.maxHp);
 
             updateUI();
+            updateExpRateUI();
         }
 
         function assignPoint(stat) {
@@ -882,6 +894,15 @@
             if (playerAttributes[stat] > initialPlayerAttributes[stat]) {
                 playerAttributes[stat]--;
                 playerAttributes.assignablePoints++;
+                recalculatePlayerStats();
+                updateAttributesUI();
+            }
+        }
+
+        function assignMaxPoints(stat) {
+            if (playerAttributes.assignablePoints > 0) {
+                playerAttributes[stat] += playerAttributes.assignablePoints;
+                playerAttributes.assignablePoints = 0;
                 recalculatePlayerStats();
                 updateAttributesUI();
             }
@@ -913,7 +934,7 @@
             return weatherMap[code] || "未知天氣";
         }
 
-        function calculateExperienceGain() {
+        function calculateBaseExpRate() {
             if (currentTemperature === null || currentHumidity === null) return 1.0;
             const OPTIMAL_TEMP_MIN = 20, OPTIMAL_TEMP_MAX = 25;
             const BAD_TEMP_LOW = 10, BAD_TEMP_HIGH = 35;
@@ -928,6 +949,22 @@
             const tempBonus = calculateBonus(currentTemperature, OPTIMAL_TEMP_MIN, OPTIMAL_TEMP_MAX, BAD_TEMP_LOW, BAD_TEMP_HIGH);
             const humidBonus = calculateBonus(currentHumidity, OPTIMAL_HUMID_MIN, OPTIMAL_HUMID_MAX, BAD_HUMID_LOW, BAD_HUMID_HIGH);
             return 1 + tempBonus + humidBonus;
+        }
+
+        function getIntelligenceBonus() {
+            return 1 + (playerAttributes.intelligence * ATTRIBUTE_EFFECTS.intelligence_to_exp_rate);
+        }
+
+        function updateExpRateUI() {
+             const baseRate = calculateBaseExpRate();
+             const intBonusMultiplier = getIntelligenceBonus();
+             const bonusValue = baseRate * (intBonusMultiplier - 1);
+             
+             if (bonusValue > 0.004) {
+                 expRateEl.innerHTML = `${baseRate.toFixed(2)}<span style="color: #4caf50; font-weight: bold;"> + ${bonusValue.toFixed(2)}</span>`;
+             } else {
+                 expRateEl.textContent = baseRate.toFixed(2);
+             }
         }
 
         async function fetchWeather() {
@@ -960,7 +997,7 @@
                         weatherConditionEl.textContent = translateWeatherCode(weatherData.current.weather_code);
                         weatherTempEl.textContent = currentTemperature;
                         weatherHumidityEl.textContent = currentHumidity;
-                        expRateEl.textContent = calculateExperienceGain().toFixed(2);
+                        updateExpRateUI();
 
                     } catch (error) {
                         console.error("無法獲取天氣資訊:", error);
@@ -1143,7 +1180,9 @@
             const currentLevelData = CULTIVATION_DATA[cultivationLevelIndex];
             if (!currentLevelData) return;
             
-            const expAmount = calculateExperienceGain();
+            const baseRate = calculateBaseExpRate();
+            const expAmount = baseRate * getIntelligenceBonus();
+
             playerExperience += expAmount;
             showExperienceGainIndicator(expAmount.toFixed(2));
             checkLevelUp();
@@ -1166,8 +1205,9 @@
         function handlePetClick() {
             if (isAwaitingTribulation) return;
 
-            playerExperience += 1;
-            showPetExperienceGainIndicator(1);
+            const expAmount = 1 * getIntelligenceBonus();
+            playerExperience += expAmount;
+            showPetExperienceGainIndicator(expAmount.toFixed(2));
             checkLevelUp(); 
 
             if (petCryTimeout) {
@@ -1238,11 +1278,13 @@
             monsterLevel++;
             logMessage(`遭遇新的敵人！`, '#FFD700');
             playerStats.hp = playerStats.maxHp;
-            const monsterIndex = (monsterLevel - 1) % MONSTERS_DATABASE.length;
-            const monsterData = MONSTERS_DATABASE[monsterIndex];
+            const playableMonsters = MONSTERS_DATABASE.filter(m => !m.isTestMonster);
+            const monsterIndexInPlayable = (monsterLevel - 1) % playableMonsters.length;
+            const monsterData = playableMonsters[monsterIndexInPlayable];
             monsterStats = { ...monsterData, hp: monsterData.maxHp, actionProgress: 0, };
-            monsterSelectEl.value = monsterIndex;
-            updateUI(); // After a monster is defeated, ensure the new monster's UI is updated.
+            const originalIndex = MONSTERS_DATABASE.findIndex(m => m.name === monsterData.name);
+            monsterSelectEl.value = originalIndex;
+            updateUI(); 
         }
         function gameLoop() {
             if (!isGameRunning) return;
@@ -1257,7 +1299,7 @@
             monsterStats.actionProgress += monsterProgressGain;
             if (playerStats.actionProgress >= ACTION_THRESHOLD) {
                 playerStats.actionProgress -= ACTION_THRESHOLD;
-                let damage = Math.max(1, playerStats.atk - monsterStats.def);
+                let damage = Math.round(Math.max(1, playerStats.atk - monsterStats.def));
                 monsterStats.hp = Math.max(0, monsterStats.hp - damage);
                 logMessage(`你對 ${monsterStats.name} 造成了 ${damage} 點傷害。`, '#87CEFA');
                 showDamageIndicator(monsterCard, damage);
@@ -1276,7 +1318,7 @@
             if (monsterStats.actionProgress >= ACTION_THRESHOLD) {
                  if (monsterStats.hp > 0) {
                     monsterStats.actionProgress -= ACTION_THRESHOLD;
-                    let damage = Math.max(1, monsterStats.atk - playerStats.def);
+                    let damage = Math.round(Math.max(1, monsterStats.atk - playerStats.def));
                     playerStats.hp = Math.max(0, playerStats.hp - damage);
                     logMessage(`${monsterStats.name} 對你造成了 ${damage} 點傷害。`, '#F08080');
                     showDamageIndicator(playerCard, damage);
@@ -1311,6 +1353,12 @@
             }
         }
         
+        function reviveAndRestartCombat() {
+            logMessage("浴火重生，再來一次！", "#ffa500");
+            monsterLevel = 1;
+            startSpecificMonsterFight(0);
+        }
+
         function resetGame() {
             playerExperience = 0;
             cultivationLevelIndex = 0;
@@ -1332,6 +1380,7 @@
             gameInterval = null;
             monsterLevel = monsterIndex + 1;
             playerStats.hp = playerStats.maxHp; 
+            playerStats.actionProgress = 0;
             const selectedMonsterData = MONSTERS_DATABASE[monsterIndex];
             monsterStats = { ...selectedMonsterData, hp: selectedMonsterData.maxHp, actionProgress: 0 };
             combatLog.innerHTML = "";
@@ -1346,7 +1395,7 @@
 
         // --- 4. 設定事件監聽 ---
         startPauseButton.addEventListener('click', toggleCombat);
-        restartButton.addEventListener('click', resetGame);
+        restartButton.addEventListener('click', reviveAndRestartCombat);
         breakthroughButton.addEventListener('click', attemptBreakthrough);
         monsterSelectEl.addEventListener('change', (event) => {
             const selectedIndex = parseInt(event.target.value, 10);
@@ -1371,6 +1420,12 @@
         removePointBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 removePoint(btn.dataset.stat);
+                saveGame();
+            });
+        });
+        maxPointBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                assignMaxPoints(btn.dataset.stat);
                 saveGame();
             });
         });
