@@ -44,6 +44,103 @@ const MONSTERS_DATABASE = [
     atk: 25,
     def: 15,
     spd: 8
+  },
+  {
+    name: "劇毒蜘蛛",
+    maxHp: 180,
+    atk: 35,
+    def: 10,
+    spd: 22
+  },
+  {
+    name: "沼澤蜥蜴人",
+    maxHp: 350,
+    atk: 30,
+    def: 25,
+    spd: 15
+  },
+  {
+    name: "地獄犬",
+    maxHp: 280,
+    atk: 45,
+    def: 20,
+    spd: 35
+  },
+  {
+    name: "獨眼巨人",
+    maxHp: 500,
+    atk: 40,
+    def: 30,
+    spd: 10
+  },
+  {
+    name: "蛇髮女妖",
+    maxHp: 380,
+    atk: 50,
+    def: 28,
+    spd: 32
+  },
+  {
+    name: "牛頭怪",
+    maxHp: 600,
+    atk: 55,
+    def: 40,
+    spd: 18
+  },
+  {
+    name: "冰霜元素",
+    maxHp: 450,
+    atk: 65,
+    def: 35,
+    spd: 28
+  },
+  {
+    name: "火焰巨靈",
+    maxHp: 480,
+    atk: 70,
+    def: 32,
+    spd: 38
+  },
+  {
+    name: "奇美拉",
+    maxHp: 750,
+    atk: 60,
+    def: 50,
+    spd: 25
+  },
+  {
+    name: "獅鷲",
+    maxHp: 650,
+    atk: 75,
+    def: 45,
+    spd: 50
+  },
+  {
+    name: "巫妖",
+    maxHp: 550,
+    atk: 90,
+    def: 40,
+    spd: 30
+  },
+  {
+    name: "深淵眼魔",
+    maxHp: 800,
+    atk: 85,
+    def: 60,
+    spd: 20
+  },
+  {
+    name: "青年龍",
+    maxHp: 1000,
+    atk: 100,
+    def: 70,
+    spd: 40
+  },
+  {
+    name: "上古巨龍",
+    maxHp: 1500,
+    atk: 120,
+    def: 80,
+    spd: 35
   }
-  // 您可以隨時在這裡新增更多不同種類的怪物！
 ];
