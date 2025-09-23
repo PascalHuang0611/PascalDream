@@ -90,15 +90,61 @@
             object-fit: contain; /* 避免圖片被拉伸 */
         }
         
+        /* --- 寵物樣式 --- */
+        .pet-container {
+            position: absolute;
+            bottom: 5px;
+            right: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: float-pet 3s ease-in-out infinite;
+        }
+        .pet-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            cursor: pointer; /* 新增手指游標 */
+        }
+        .pet-name-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #ffd700;
+            font-size: 12px; /* 將字體縮小 */
+            margin-top: 2px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #edit-pet-name {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #edit-pet-name svg {
+            stroke: #aaa;
+            transition: stroke 0.2s ease;
+        }
+        #edit-pet-name:hover svg {
+            stroke: #fff;
+        }
+
+        @keyframes float-pet {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+
         .revolving-orb {
             position: absolute;
             top: 50%; /* 將動畫中心點設在容器中央 */
             left: 50%;
             width: 20px;
             height: 20px;
-            background-color: #00e5ff;
+            background-color: #00e5ff; /* 預設顏色，會被 JS 覆蓋 */
             border-radius: 50%;
-            box-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 30px #fff;
+            box-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 30px #fff; /* 預設光暈，會被 JS 覆蓋 */
             animation: revolve 10s linear infinite;
         }
 
@@ -384,6 +430,40 @@
             50% { background-color: rgba(150, 0, 0, 0.5); }
             100% { background-color: rgba(255, 0, 0, 0); }
         }
+        
+        /* --- 自訂提示訊息樣式 --- */
+        .alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .alert-box {
+            background: #2a2a2a;
+            padding: 25px 30px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .alert-box p {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            color: #e0e0e0;
+        }
+
+        .alert-box button {
+            padding: 8px 20px;
+            font-size: 16px;
+        }
 
     </style>
 </head>
@@ -399,7 +479,16 @@
             <div class="meditation-visual">
                 <div class="meditation-container">
                     <img src="./player_image.png" alt="修煉中的小人" class="meditating-person-img" onerror="this.style.display='none'">
-                    <div class="revolving-orb"></div>
+                    <div class="pet-container">
+                        <img src="./pet_image.png" alt="寵物" class="pet-img" onerror="this.style.display='none'">
+                        <div class="pet-name-container">
+                            <span id="pet-name">于庭</span>
+                            <span id="edit-pet-name">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- 光球將由 JavaScript 動態生成 -->
                 </div>
             </div>
             <div class="cultivation-stats">
@@ -455,15 +544,25 @@
         </div>
     </div>
 
+    <!-- 自訂提示訊息 HTML -->
+    <div id="custom-alert-overlay" class="alert-overlay" style="display: none;">
+        <div id="custom-alert-box" class="alert-box">
+            <p id="custom-alert-message"></p>
+            <button id="custom-alert-close">臣妾知道了</button>
+        </div>
+    </div>
 
-    <!-- 載入設定檔 -->
-    <script src="monsters.js"></script>
-    <script src="cultivation_levels.js"></script>
+
+    <!-- 載入設定檔 (加入版本號 ?v=1.2 來避免快取問題) -->
+    <script src="monsters.js?v=1.0"></script>
+    <script src="cultivation_levels.js?v=1.2"></script>
 
 
     <script>
         // --- 1. 初始角色數值 ---
         const initialPlayerStats = { name: "玩家", maxHp: 100, hp: 100, atk: 20, def: 5, spd: 20 };
+        const PET_NORMAL_IMAGE = './pet_image.png';
+        const PET_CRY_IMAGE = './pet_image_cry.png'; // 寵物哭泣的圖片路徑
         
         let playerStats = { ...initialPlayerStats, actionProgress: 0 };
         let monsterStats = {}; // 初始化為空物件，將由 resetGame 填入
@@ -477,6 +576,7 @@
         let monsterLevel = 1;
         let isGameRunning = false;
         let gameInterval = null;
+        let petCryTimeout = null; // 用於控制寵物圖片恢復的計時器
         const ACTION_THRESHOLD = 1000;
         const TICK_RATE = 50;
 
@@ -513,8 +613,23 @@
         const combatScreenEl = document.getElementById('combat-screen');
         const meditationContainerEl = document.querySelector('.meditation-container');
         const monsterSelectEl = document.getElementById('monster-select');
+        const petImgEl = document.querySelector('.pet-img'); // 獲取寵物圖片元素
+        const editPetNameEl = document.getElementById('edit-pet-name');
+        const customAlertOverlay = document.getElementById('custom-alert-overlay');
+        const customAlertMessage = document.getElementById('custom-alert-message');
+        const customAlertClose = document.getElementById('custom-alert-close');
+
 
         // --- 3. 遊戲核心功能 ---
+
+        // --- 自訂提示訊息功能 ---
+        function showCustomAlert(message) {
+            customAlertMessage.textContent = message;
+            customAlertOverlay.style.display = 'flex';
+        }
+        function hideCustomAlert() {
+            customAlertOverlay.style.display = 'none';
+        }
 
         function translateWeatherCode(code) {
             const weatherMap = {
@@ -563,7 +678,7 @@
                     }
 
                     // Step 2: Fetch weather using coordinates
-                    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
+                    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lon}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
                     try {
                         const weatherResponse = await fetch(weatherUrl);
                         if (!weatherResponse.ok) throw new Error('天氣API回應錯誤');
@@ -611,14 +726,12 @@
             const progress = isFinite(expRequired) ? (playerExperience / expRequired) * 100 : 100;
             expProgressBarEl.style.width = `${Math.min(100, progress)}%`;
 
-            // 更新渡劫成功率顯示
             if (currentLevelData.isTribulationLevel) {
                  tribulationRateEl.textContent = (currentLevelData.tribulationSuccessRate * 100).toFixed(0);
             } else {
                  tribulationRateEl.textContent = '--';
             }
 
-            // 更新渡劫按鈕狀態與文字
             if (isAwaitingTribulation) {
                 breakthroughButton.disabled = false;
                 breakthroughButton.textContent = "渡劫";
@@ -630,12 +743,40 @@
             }
         }
 
+        function updateRevolvingOrbs() {
+            const currentLevelData = CULTIVATION_DATA[cultivationLevelIndex];
+            const realmIndex = currentLevelData.realmIndex;
+            const numberOfOrbs = realmIndex + 1;
+            const animationDuration = 10; 
+
+            meditationContainerEl.querySelectorAll('.revolving-orb').forEach(orb => orb.remove());
+
+            for (let i = 0; i < numberOfOrbs; i++) {
+                const orb = document.createElement('div');
+                orb.className = 'revolving-orb';
+
+                const delay = -(animationDuration / numberOfOrbs) * i;
+                orb.style.animationDelay = `${delay}s`;
+
+                const orbColor = REALM_DEFINITIONS[i].color;
+
+                orb.style.backgroundColor = orbColor;
+                orb.style.boxShadow = `0 0 10px ${orbColor}, 0 0 20px ${orbColor}, 0 0 30px #fff`;
+
+                meditationContainerEl.appendChild(orb);
+            }
+        }
+
         function levelUp() {
             const oldLevelData = CULTIVATION_DATA[cultivationLevelIndex];
             playerExperience -= oldLevelData.expRequired;
             cultivationLevelIndex++;
             const newLevelData = CULTIVATION_DATA[cultivationLevelIndex];
             logMessage(`恭喜！你成功晉升到了 ${newLevelData.displayName}！`, newLevelData.color);
+
+            if (newLevelData.realmIndex !== oldLevelData.realmIndex) {
+                updateRevolvingOrbs(); 
+            }
         }
 
         function playTribulationAnimation(isSuccess) {
@@ -671,36 +812,31 @@
             const successRate = currentLevelData.tribulationSuccessRate;
             
             if (Math.random() < successRate) {
-                // 渡劫成功
                 playTribulationAnimation(true);
                 const nextLevelData = CULTIVATION_DATA[cultivationLevelIndex + 1];
                 logMessage(`天雷淬體，渡劫成功！恭喜突破至 ${nextLevelData.displayName}！`, nextLevelData.color);
                 levelUp();
                 isAwaitingTribulation = false;
             } else {
-                // 渡劫失敗
                 playTribulationAnimation(false);
                 const penalty = currentLevelData.expRequired * 0.20;
                 playerExperience -= penalty;
+                if (playerExperience < 0) playerExperience = 0;
                 logMessage(`渡劫失敗，真氣逆行，損失了 ${Math.round(penalty)} 點修為...`, '#dc3545');
                 isAwaitingTribulation = false;
             }
             updateCultivationUI();
         }
 
-        function gainExperience() {
-            if (isAwaitingTribulation) return; // 經驗值已滿，等待渡劫
-
+        function checkLevelUp() {
             const currentLevelData = CULTIVATION_DATA[cultivationLevelIndex];
-            const expRequired = currentLevelData.expRequired;
+            if (!currentLevelData) return;
             
-            const expAmount = calculateExperienceGain();
-            playerExperience += expAmount;
-            showExperienceGainIndicator(expAmount.toFixed(2));
+            const expRequired = currentLevelData.expRequired;
 
-            if (playerExperience >= expRequired) {
+            if (isFinite(expRequired) && playerExperience >= expRequired) {
                 if (currentLevelData.isTribulationLevel) {
-                    playerExperience = expRequired; // 將經驗值鎖定在最大值
+                    playerExperience = expRequired;
                     isAwaitingTribulation = true;
                 } else {
                     levelUp();
@@ -708,8 +844,50 @@
             }
             updateCultivationUI();
         }
+
+        function gainExperience() {
+            if (isAwaitingTribulation) return;
+            const currentLevelData = CULTIVATION_DATA[cultivationLevelIndex];
+            if (!currentLevelData) return;
+            
+            const expAmount = calculateExperienceGain();
+            playerExperience += expAmount;
+            showExperienceGainIndicator(expAmount.toFixed(2));
+            checkLevelUp();
+        }
+
+        function showPetExperienceGainIndicator(amount) {
+            const indicator = document.createElement('div');
+            indicator.textContent = `+${amount}`;
+            indicator.className = 'exp-indicator';
+            meditationContainerEl.appendChild(indicator);
+            
+            indicator.style.left = '85%'; 
+            indicator.style.top = '65%';
+            indicator.style.transform = 'translateX(-50%)';
+            indicator.style.fontSize = '18px';
+
+            setTimeout(() => indicator.remove(), 900);
+        }
+
+        function handlePetClick() {
+            if (isAwaitingTribulation) return;
+
+            playerExperience += 1;
+            showPetExperienceGainIndicator(1);
+            checkLevelUp(); 
+
+            if (petCryTimeout) {
+                clearTimeout(petCryTimeout);
+            }
+            
+            petImgEl.src = PET_CRY_IMAGE;
+
+            petCryTimeout = setTimeout(() => {
+                petImgEl.src = PET_NORMAL_IMAGE;
+            }, 300);
+        }
         
-        // --- 省略其他遊戲功能 (UI更新, 戰鬥邏輯等保持不變) ---
         function updateUI() {
             playerAtkEl.textContent = playerStats.atk;
             playerDefEl.textContent = playerStats.def;
@@ -785,7 +963,7 @@
             monsterStats.actionProgress += monsterProgressGain;
             if (playerStats.actionProgress >= ACTION_THRESHOLD) {
                 playerStats.actionProgress -= ACTION_THRESHOLD;
-                let damage = Math.max(0, playerStats.atk - monsterStats.def);
+                let damage = Math.max(1, playerStats.atk - monsterStats.def);
                 monsterStats.hp = Math.max(0, monsterStats.hp - damage);
                 logMessage(`你對 ${monsterStats.name} 造成了 ${damage} 點傷害。`, '#87CEFA');
                 showDamageIndicator(monsterCard, damage);
@@ -804,7 +982,7 @@
             if (monsterStats.actionProgress >= ACTION_THRESHOLD) {
                  if (monsterStats.hp > 0) {
                     monsterStats.actionProgress -= ACTION_THRESHOLD;
-                    let damage = Math.max(0, monsterStats.atk - playerStats.def);
+                    let damage = Math.max(1, playerStats.atk - playerStats.def);
                     playerStats.hp = Math.max(0, playerStats.hp - damage);
                     logMessage(`${monsterStats.name} 對你造成了 ${damage} 點傷害。`, '#F08080');
                     showDamageIndicator(playerCard, damage);
@@ -845,6 +1023,7 @@
             isAwaitingTribulation = false;
             startSpecificMonsterFight(0);
             updateCultivationUI();
+            updateRevolvingOrbs();
         }
         
         function startSpecificMonsterFight(monsterIndex) {
@@ -872,6 +1051,16 @@
             const selectedIndex = parseInt(event.target.value, 10);
             startSpecificMonsterFight(selectedIndex);
         });
+        petImgEl.addEventListener('click', handlePetClick);
+        editPetNameEl.addEventListener('click', () => {
+            showCustomAlert('想改名? 求我啊~~');
+        });
+        customAlertClose.addEventListener('click', hideCustomAlert);
+        customAlertOverlay.addEventListener('click', (event) => {
+            if (event.target === customAlertOverlay) {
+                hideCustomAlert();
+            }
+        });
 
         // --- 5. 遊戲初始化 ---
         function populateMonsterSelector() {
@@ -886,9 +1075,9 @@
         function initGame() {
             populateMonsterSelector();
             logMessage("點擊按鈕開始自動戰鬥。");
-            setInterval(gainExperience, 1000); // 開始自動獲取經驗
-            fetchWeather(); // 遊戲載入時獲取天氣
-            setInterval(fetchWeather, 900000); // 每 15 分鐘更新一次天氣
+            setInterval(gainExperience, 1000);
+            fetchWeather();
+            setInterval(fetchWeather, 900000);
             resetGame(); 
         }
 
