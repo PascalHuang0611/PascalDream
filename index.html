@@ -70,11 +70,93 @@
         .meditation-visual {
             flex-grow: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column; /* 改為垂直排列 */
+            align-items: center;   /* 水平置中 */
+            justify-content: center; /* 垂直置中 */
             width: 100%;
+            gap: 5px; /* 縮小整體間距 */
         }
         
+        /* --- 屬性面板 --- */
+        #attributes-panel {
+            width: 200px; /* 加寬以符合整體視覺 */
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* 縮小間距 */
+            font-size: 14px;
+        }
+        .attribute-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .attribute-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .attribute-value {
+            width: 2em;
+            text-align: center;
+        }
+        .point-btn {
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+            transition: background-color 0.2s;
+        }
+        .point-btn:hover:not(:disabled) {
+            filter: brightness(1.2);
+        }
+        .add-point-btn {
+            background-color: #4caf50;
+        }
+        .remove-point-btn {
+            background-color: #f44336;
+        }
+        .point-btn:disabled {
+            background-color: #333;
+            color: #777;
+            border-color: #555;
+            cursor: not-allowed;
+        }
+
+        #assignable-points-container {
+            text-align: center;
+            margin-bottom: 5px; /* 縮小間距 */
+            font-weight: bold;
+            color: #ffa500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        #assignable-points {
+            font-size: 18px;
+        }
+        #reset-attributes-btn {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+        }
+        #reset-attributes-btn:hover {
+            color: #fff;
+        }
+
+
         .meditation-container {
             position: relative;
             width: 200px;
@@ -82,6 +164,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0; /* 防止被壓縮 */
         }
 
         .meditating-person-img {
@@ -165,6 +248,11 @@
          .cultivation-stats p {
             margin: 5px 0;
         }
+        .cultivation-stats button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
         #cultivation-level-name {
             font-size: 20px;
             font-weight: bold;
@@ -239,6 +327,10 @@
             border-radius: 5px;
             font-size: 16px;
             cursor: pointer;
+        }
+        #clear-save-btn {
+            margin-top: 10px;
+            background: linear-gradient(145deg, #e53935, #b71c1c);
         }
 
 
@@ -477,6 +569,46 @@
                 <p><span id="weather-condition">--</span> | 溫度: <span id="weather-temp">--</span>°C | 濕度: <span id="weather-humidity">--</span>%</p>
             </div>
             <div class="meditation-visual">
+                <div id="attributes-panel">
+                    <div id="assignable-points-container">
+                        <span>可分配點數: <span id="assignable-points">0</span></span>
+                        <span id="reset-attributes-btn" title="重置屬性點">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3L22 2M22 12.5a10 10 0 0 1-18.8 4.3L2 22"/></svg>
+                        </span>
+                    </div>
+                    <div class="attribute-row">
+                        <span>力量</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="strength">-</button>
+                            <span id="strength-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="strength">+</button>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <span>敏捷</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="agility">-</button>
+                            <span id="agility-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="agility">+</button>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <span>體質</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="constitution">-</button>
+                            <span id="constitution-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="constitution">+</button>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <span>智力</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="intelligence">-</button>
+                            <span id="intelligence-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="intelligence">+</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="meditation-container">
                     <img src="./player_image.png" alt="修煉中的小人" class="meditating-person-img" onerror="this.style.display='none'">
                     <div class="pet-container">
@@ -497,7 +629,7 @@
                 <p>經驗: <span id="player-exp">0</span> / <span id="exp-required">100</span></p>
                 <p>修煉速度: <span id="exp-rate">1.00</span> 點/秒</p>
                 <p>渡劫成功率: <span id="tribulation-rate">--</span>%</p>
-                <button id="breakthrough-button" disabled>修練中...</button>
+                <button id="breakthrough-button">渡劫</button>
             </div>
         </div>
 
@@ -541,6 +673,7 @@
         <div id="test-controls">
             <label for="monster-select">選擇測試怪物:</label>
             <select id="monster-select"></select>
+            <button id="clear-save-btn">清除本地存檔</button>
         </div>
     </div>
 
@@ -553,7 +686,9 @@
     </div>
 
 
-    <!-- 載入設定檔 (加入版本號 ?v=1.2 來避免快取問題) -->
+    <!-- 載入設定檔 -->
+    <script src="player_attributes.js?v=1.0" defer></script>
+    <script src="player_stats.js?v=1.0" defer></script>
     <script src="monsters.js?v=1.0" defer></script>
     <script src="cultivation_levels.js?v=1.2" defer></script>
 
@@ -561,16 +696,19 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- 1. 初始角色數值 ---
-        const initialPlayerStats = { name: "玩家", maxHp: 100, hp: 100, atk: 20, def: 5, spd: 20 };
         const PET_NORMAL_IMAGE = './pet_image.png';
         const PET_CRY_IMAGE = './pet_image_cry.png'; // 寵物哭泣的圖片路徑
+        const GAME_VERSION = '1.1'; // 遊戲版本，用於處理舊存檔
+        const SAVE_KEY = 'cultivationGameSave';
         
         let playerStats = { ...initialPlayerStats, actionProgress: 0 };
+        let playerAttributes = { ...initialPlayerAttributes };
         let monsterStats = {}; // 初始化為空物件，將由 resetGame 填入
 
         // --- 遊戲狀態變數 ---
         let playerExperience = 0;
         let cultivationLevelIndex = 0;
+        let totalHpBonusFromLevels = 0;
         let isAwaitingTribulation = false;
         let currentTemperature = null;
         let currentHumidity = null;
@@ -614,14 +752,69 @@
         const combatScreenEl = document.getElementById('combat-screen');
         const meditationContainerEl = document.querySelector('.meditation-container');
         const monsterSelectEl = document.getElementById('monster-select');
-        const petImgEl = document.querySelector('.pet-img'); // 獲取寵物圖片元素
+        const petImgEl = document.querySelector('.pet-img');
         const editPetNameEl = document.getElementById('edit-pet-name');
         const customAlertOverlay = document.getElementById('custom-alert-overlay');
         const customAlertMessage = document.getElementById('custom-alert-message');
         const customAlertClose = document.getElementById('custom-alert-close');
+        const clearSaveBtn = document.getElementById('clear-save-btn');
+        
+        // 屬性面板元素
+        const assignablePointsEl = document.getElementById('assignable-points');
+        const strengthValueEl = document.getElementById('strength-value');
+        const agilityValueEl = document.getElementById('agility-value');
+        const constitutionValueEl = document.getElementById('constitution-value');
+        const intelligenceValueEl = document.getElementById('intelligence-value');
+        const addPointBtns = document.querySelectorAll('.add-point-btn');
+        const removePointBtns = document.querySelectorAll('.remove-point-btn');
+        const resetAttributesBtn = document.getElementById('reset-attributes-btn');
 
 
         // --- 3. 遊戲核心功能 ---
+        
+        // --- 存檔/讀檔 ---
+        function saveGame() {
+            const saveData = {
+                version: GAME_VERSION,
+                cultivationLevelIndex: cultivationLevelIndex,
+                playerExperience: playerExperience,
+                playerAttributes: playerAttributes,
+                totalHpBonusFromLevels: totalHpBonusFromLevels,
+            };
+            localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+        }
+
+        function loadGame() {
+            const savedData = localStorage.getItem(SAVE_KEY);
+            if (!savedData) return false;
+
+            try {
+                const parsedData = JSON.parse(savedData);
+                if (parsedData.version !== GAME_VERSION) {
+                    logMessage('偵測到不相容的舊存檔，已開始新遊戲。', '#ffa500');
+                    localStorage.removeItem(SAVE_KEY);
+                    return false;
+                }
+
+                cultivationLevelIndex = parsedData.cultivationLevelIndex;
+                playerExperience = parsedData.playerExperience;
+                playerAttributes = parsedData.playerAttributes;
+                totalHpBonusFromLevels = parsedData.totalHpBonusFromLevels;
+                
+                logMessage('成功讀取進度。');
+                return true;
+
+            } catch(e) {
+                console.error("讀取存檔失敗:", e);
+                localStorage.removeItem(SAVE_KEY);
+                return false;
+            }
+        }
+
+        function clearSaveData() {
+            localStorage.removeItem(SAVE_KEY);
+            location.reload();
+        }
 
         // --- 自訂提示訊息功能 ---
         function showCustomAlert(message) {
@@ -631,6 +824,83 @@
         function hideCustomAlert() {
             customAlertOverlay.style.display = 'none';
         }
+        
+        // --- 屬性與能力值 ---
+        function updateAttributesUI() {
+            assignablePointsEl.textContent = playerAttributes.assignablePoints;
+            strengthValueEl.textContent = playerAttributes.strength;
+            agilityValueEl.textContent = playerAttributes.agility;
+            constitutionValueEl.textContent = playerAttributes.constitution;
+            intelligenceValueEl.textContent = playerAttributes.intelligence;
+
+            addPointBtns.forEach(btn => {
+                btn.disabled = playerAttributes.assignablePoints <= 0;
+            });
+            removePointBtns.forEach(btn => {
+                const stat = btn.dataset.stat;
+                btn.disabled = playerAttributes[stat] <= initialPlayerAttributes[stat];
+            });
+            
+            let spentPoints = (playerAttributes.strength - initialPlayerAttributes.strength) +
+                              (playerAttributes.agility - initialPlayerAttributes.agility) +
+                              (playerAttributes.constitution - initialPlayerAttributes.constitution) +
+                              (playerAttributes.intelligence - initialPlayerAttributes.intelligence);
+            resetAttributesBtn.style.display = spentPoints > 0 ? 'inline-block' : 'none';
+        }
+
+        function recalculatePlayerStats() {
+            const baseStats = initialPlayerStats;
+            const attr = playerAttributes;
+            const effects = ATTRIBUTE_EFFECTS;
+
+            const newMaxHp = baseStats.maxHp + totalHpBonusFromLevels;
+            const hpDiff = newMaxHp - playerStats.maxHp;
+
+            playerStats.atk = baseStats.atk + (attr.strength * effects.strength_to_atk);
+            playerStats.spd = baseStats.spd + (attr.agility * effects.agility_to_spd);
+            playerStats.def = baseStats.def + (attr.constitution * effects.constitution_to_def);
+            playerStats.maxHp = newMaxHp;
+
+            if (hpDiff > 0 && playerStats.hp > 0) {
+                 playerStats.hp += hpDiff;
+            }
+            playerStats.hp = Math.min(playerStats.hp, playerStats.maxHp);
+
+            updateUI();
+        }
+
+        function assignPoint(stat) {
+            if (playerAttributes.assignablePoints > 0) {
+                playerAttributes.assignablePoints--;
+                playerAttributes[stat]++;
+                recalculatePlayerStats();
+                updateAttributesUI();
+            }
+        }
+        
+        function removePoint(stat) {
+            if (playerAttributes[stat] > initialPlayerAttributes[stat]) {
+                playerAttributes[stat]--;
+                playerAttributes.assignablePoints++;
+                recalculatePlayerStats();
+                updateAttributesUI();
+            }
+        }
+        
+        function resetAttributes() {
+            let spentPoints = 0;
+            const stats = ['strength', 'agility', 'constitution', 'intelligence'];
+            stats.forEach(stat => {
+                spentPoints += (playerAttributes[stat] - initialPlayerAttributes[stat]);
+                playerAttributes[stat] = initialPlayerAttributes[stat];
+            });
+
+            playerAttributes.assignablePoints += spentPoints;
+
+            recalculatePlayerStats();
+            updateAttributesUI();
+        }
+
 
         function translateWeatherCode(code) {
             const weatherMap = {
@@ -666,7 +936,6 @@
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    // Step 1: Reverse Geocode to get location name
                     let locationName = '未知地區';
                     try {
                         const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
@@ -678,8 +947,6 @@
                         console.error("無法進行反向地理編碼:", geoError);
                     }
 
-                    // Step 2: Fetch weather using coordinates
-                    // --- BUG FIX: Swapped lat and lon ---
                     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
                     try {
                         const weatherResponse = await fetch(weatherUrl);
@@ -776,9 +1043,33 @@
             const newLevelData = CULTIVATION_DATA[cultivationLevelIndex];
             logMessage(`恭喜！你成功晉升到了 ${newLevelData.displayName}！`, newLevelData.color);
 
+            let pointsGained = 0;
+            let hpGained = 0;
+
             if (newLevelData.realmIndex !== oldLevelData.realmIndex) {
+                pointsGained = ATTRIBUTE_POINT_GAINS.onRealmUp;
+                hpGained = HP_GAINS_ON_LEVELUP.onRealmUp;
                 updateRevolvingOrbs(); 
+            } else if (newLevelData.stageName !== oldLevelData.stageName) {
+                pointsGained = ATTRIBUTE_POINT_GAINS.onStageUp;
+                hpGained = HP_GAINS_ON_LEVELUP.onStageUp;
+            } else {
+                pointsGained = ATTRIBUTE_POINT_GAINS.onLayerUp;
+                hpGained = HP_GAINS_ON_LEVELUP.onLayerUp;
             }
+            
+            if (pointsGained > 0) {
+                 playerAttributes.assignablePoints += pointsGained;
+                 logMessage(`靈氣灌頂！你獲得了 ${pointsGained} 點可分配屬性點！`, '#FFD700');
+            }
+            if (hpGained > 0) {
+                totalHpBonusFromLevels += hpGained;
+                logMessage(`根基穩固！你的生命上限提升了 ${hpGained} 點！`, '#4caf50');
+            }
+            
+            recalculatePlayerStats();
+            updateAttributesUI();
+            saveGame();
         }
 
         function playTribulationAnimation(isSuccess) {
@@ -891,10 +1182,10 @@
         }
         
         function updateUI() {
-            playerAtkEl.textContent = playerStats.atk;
-            playerDefEl.textContent = playerStats.def;
-            playerSpdEl.textContent = playerStats.spd;
-            playerHpTextEl.textContent = `${playerStats.hp} / ${playerStats.maxHp}`;
+            playerAtkEl.textContent = playerStats.atk.toFixed(1);
+            playerDefEl.textContent = playerStats.def.toFixed(1);
+            playerSpdEl.textContent = playerStats.spd.toFixed(1);
+            playerHpTextEl.textContent = `${Math.round(playerStats.hp)} / ${playerStats.maxHp}`;
             playerHealthBarEl.style.width = `${(playerStats.hp / playerStats.maxHp) * 100}%`;
             playerActionBarEl.style.width = `${(playerStats.actionProgress / ACTION_THRESHOLD) * 100}%`;
             if (monsterStats.name) {
@@ -951,6 +1242,7 @@
             const monsterData = MONSTERS_DATABASE[monsterIndex];
             monsterStats = { ...monsterData, hp: monsterData.maxHp, actionProgress: 0, };
             monsterSelectEl.value = monsterIndex;
+            updateUI(); // After a monster is defeated, ensure the new monster's UI is updated.
         }
         function gameLoop() {
             if (!isGameRunning) return;
@@ -984,7 +1276,7 @@
             if (monsterStats.actionProgress >= ACTION_THRESHOLD) {
                  if (monsterStats.hp > 0) {
                     monsterStats.actionProgress -= ACTION_THRESHOLD;
-                    let damage = Math.max(1, playerStats.atk - playerStats.def);
+                    let damage = Math.max(1, monsterStats.atk - playerStats.def);
                     playerStats.hp = Math.max(0, playerStats.hp - damage);
                     logMessage(`${monsterStats.name} 對你造成了 ${damage} 點傷害。`, '#F08080');
                     showDamageIndicator(playerCard, damage);
@@ -1022,8 +1314,14 @@
         function resetGame() {
             playerExperience = 0;
             cultivationLevelIndex = 0;
+            totalHpBonusFromLevels = 0;
             isAwaitingTribulation = false;
+            playerAttributes = { ...initialPlayerAttributes };
+            
             startSpecificMonsterFight(0);
+
+            recalculatePlayerStats();
+            updateAttributesUI();
             updateCultivationUI();
             updateRevolvingOrbs();
         }
@@ -1033,7 +1331,7 @@
             if (gameInterval) clearInterval(gameInterval);
             gameInterval = null;
             monsterLevel = monsterIndex + 1;
-            playerStats = { ...initialPlayerStats, actionProgress: 0 };
+            playerStats.hp = playerStats.maxHp; 
             const selectedMonsterData = MONSTERS_DATABASE[monsterIndex];
             monsterStats = { ...selectedMonsterData, hp: selectedMonsterData.maxHp, actionProgress: 0 };
             combatLog.innerHTML = "";
@@ -1042,6 +1340,7 @@
             startPauseButton.style.display = 'block';
             restartButton.style.display = 'none';
             monsterSelectEl.value = monsterIndex;
+            recalculatePlayerStats();
             updateUI();
         }
 
@@ -1063,6 +1362,23 @@
                 hideCustomAlert();
             }
         });
+        addPointBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                assignPoint(btn.dataset.stat);
+                saveGame();
+            });
+        });
+        removePointBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                removePoint(btn.dataset.stat);
+                saveGame();
+            });
+        });
+        resetAttributesBtn.addEventListener('click', () => {
+            resetAttributes();
+            saveGame();
+        });
+        clearSaveBtn.addEventListener('click', clearSaveData);
 
         // --- 5. 遊戲初始化 ---
         function populateMonsterSelector() {
@@ -1076,11 +1392,22 @@
 
         function initGame() {
             populateMonsterSelector();
-            logMessage("點擊按鈕開始自動戰鬥。");
+            
+            if (!loadGame()) {
+                logMessage("點擊按鈕開始自動戰鬥。");
+                resetGame(); 
+            } else {
+                startSpecificMonsterFight(0);
+                recalculatePlayerStats();
+                updateAttributesUI();
+                updateCultivationUI();
+                updateRevolvingOrbs();
+            }
+            
             setInterval(gainExperience, 1000);
+            setInterval(saveGame, 5000); // 每5秒自動存檔
             fetchWeather();
             setInterval(fetchWeather, 900000);
-            resetGame(); 
         }
 
         initGame();
