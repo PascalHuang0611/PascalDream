@@ -678,7 +678,8 @@
                     }
 
                     // Step 2: Fetch weather using coordinates
-                    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lon}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
+                    // --- BUG FIX: Swapped lat and lon ---
+                    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`;
                     try {
                         const weatherResponse = await fetch(weatherUrl);
                         if (!weatherResponse.ok) throw new Error('天氣API回應錯誤');
