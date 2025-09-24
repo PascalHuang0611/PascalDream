@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自動戰鬥遊戲</title>
+    <style>
+        /* --- 整體頁面樣式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: flex-start; /* 改為左對齊以修復滾軸問題 */
+            align-items: flex-start; /* 頂部對齊 */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: auto; /* 當內容超出螢幕寬度時，顯示水平滾軸 */
+        }
+
+        /* --- 主應用程式包裹容器 --- */
+        #app-wrapper {
+            display: flex;
+            flex-direction: row; /* 始終保持水平排列 */
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        /* --- 修煉面板 --- */
+        #cultivation-panel {
+            width: 300px;
+            height: 700px;
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+            gap: 10px; /* 稍微調整間距 */
+            flex-shrink: 0;
+        }
+        #cultivation-panel h2 {
+            margin: 0;
+            color: #00bcd4;
+            text-align: center;
+        }
+
+        /* 天氣資訊 */
+        #weather-info {
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        #weather-info p {
+            margin: 4px 0;
+        }
+        #weather-location {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .meditation-visual {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column; /* 改為垂直排列 */
+            align-items: center;   /* 水平置中 */
+            justify-content: center; /* 垂直置中 */
+            width: 100%;
+            gap: 5px; /* 縮小整體間距 */
+        }
+        
+        /* --- 屬性面板 --- */
+        #attributes-panel {
+            width: 200px; /* 加寬以符合整體視覺 */
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* 縮小間距 */
+            font-size: 14px;
+        }
+        .attribute-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .attribute-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* 縮小按鈕間距 */
+            transform: translateX(30px);
+        }
+        .attribute-value {
+            width: 2em;
+            text-align: center;
+        }
+        .point-btn {
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+            transition: background-color 0.2s;
+        }
+        .point-btn:hover:not(:disabled) {
+            filter: brightness(1.2);
+        }
+        .add-point-btn {
+            background-color: #4caf50;
+        }
+        .remove-point-btn {
+            background-color: #f44336;
+        }
+        .max-point-btn {
+            background-color: #2196F3;
+            font-size: 14px;
+        }
+        .point-btn:disabled {
+            background-color: #333;
+            color: #777;
+            border-color: #555;
+            cursor: not-allowed;
+        }
+
+        #assignable-points-container {
+            text-align: center;
+            margin-bottom: 5px; /* 縮小間距 */
+            font-weight: bold;
+            color: #ffa500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        #assignable-points {
+            font-size: 18px;
+        }
+        #reset-attributes-btn {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+        }
+        #reset-attributes-btn:hover {
+            color: #fff;
+        }
+
+
+        .meditation-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* 防止被壓縮 */
+        }
+
+        .meditating-person-img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain; /* 避免圖片被拉伸 */
+        }
+        
+        /* --- 寵物樣式 --- */
+        .pet-container {
+            position: absolute;
+            bottom: 5px;
+            right: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: float-pet 3s ease-in-out infinite;
+        }
+        .pet-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            cursor: pointer; /* 新增手指游標 */
+        }
+        .pet-name-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #ffd700;
+            font-size: 12px; /* 將字體縮小 */
+            margin-top: 2px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #edit-pet-name {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #edit-pet-name svg {
+            stroke: #aaa;
+            transition: stroke 0.2s ease;
+        }
+        #edit-pet-name:hover svg {
+            stroke: #fff;
+        }
+
+        @keyframes float-pet {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+
+        .revolving-orb {
+            position: absolute;
+            top: 50%; /* 將動畫中心點設在容器中央 */
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: #00e5ff; /* 預設顏色，會被 JS 覆蓋 */
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 30px #fff; /* 預設光暈，會被 JS 覆蓋 */
+            animation: revolve 10s linear infinite;
+        }
+
+        @keyframes revolve {
+            from {
+                transform: translate(-50%, -50%) rotate(0deg) translateX(100px) rotate(0deg);
+            }
+            to {
+                transform: translate(-50%, -50%) rotate(360deg) translateX(100px) rotate(-360deg);
+            }
+        }
+
+        .cultivation-stats {
+            width: 100%;
+            text-align: center;
+            font-size: 14px; 
+        }
+         .cultivation-stats p {
+            margin: 5px 0;
+        }
+        .cultivation-stats button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        #cultivation-level-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFD700; 
+            transition: color 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        /* 後期境界光暈效果 */
+        #cultivation-level-name.late-stage-glow {
+            text-shadow: 0 0 5px #fff, 0 0 8px currentColor;
+        }
+
+        /* 大圓滿境界脈動光暈 */
+        #cultivation-level-name.perfection-glow {
+            animation: perfection-pulse 2s infinite;
+        }
+
+        @keyframes perfection-pulse {
+            0% { text-shadow: 0 0 5px #fff, 0 0 10px currentColor; }
+            50% { text-shadow: 0 0 15px #fff, 0 0 25px currentColor; }
+            100% { text-shadow: 0 0 5px #fff, 0 0 10px currentColor; }
+        }
+        
+        
+        /* --- 遊戲主容器 --- */
+        #game-container {
+            width: 850px;
+            height: 700px;
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+            /* gap: 15px; */ /* Gap will be handled by wrappers now */
+            flex-shrink: 0;
+            position: relative; /* For positioning the view switcher */
+        }
+
+        /* --- 視圖容器 --- */
+        #combat-view-wrapper, #farm-screen {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #farm-screen {
+            align-items: center;
+            justify-content: flex-start; /* 改為頂部對齊 */
+            text-align: center;
+            color: #888;
+            position: relative; /* 新增：作為浮動文字的定位基準 */
+        }
+        #farm-screen h2 {
+            color: #ffa500;
+        }
+        
+        /* --- 農場樣式 --- */
+        #farm-plot {
+            width: 95%;
+            height: 70%; /* 控制柵欄高度 */
+            margin-top: 10px;
+            background: #386641; /* 較深的草地綠色 */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 15px 15px;
+            border: 15px solid #A1887F;
+            border-radius: 10px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden; /* Keep animals inside the fence */
+        }
+
+        .farm-animal {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            transition: top 4s ease-in-out, left 4s ease-in-out, transform 0.5s ease;
+            transform: scaleX(1); /* Initial direction */
+            user-select: none;
+            cursor: pointer;
+            object-fit: contain;
+        }
+        .farm-animal.dead {
+            cursor: pointer; /* 死掉還是可以點 */
+        }
+
+
+        /* 戰鬥畫面容器 */
+        #combat-screen {
+            flex-grow: 1;
+            position: relative;
+            min-height: 250px;
+            background-color: #333; 
+            border: 1px solid #4f4f4f; 
+            border-radius: 10px;      
+        }
+
+        /* --- 測試控制項 --- */
+        #test-controls {
+            padding: 15px;
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 200px;
+            flex-shrink: 0; /* 防止此容器也被壓縮 */
+        }
+        #test-controls label {
+            font-weight: bold;
+            color: #ffa500;
+        }
+        #test-controls select {
+            padding: 8px;
+            background-color: #3c3c3c;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #clear-save-btn {
+            margin-top: 10px;
+            background: linear-gradient(145deg, #e53935, #b71c1c);
+        }
+
+
+        /* 畫面震動攻擊特效 */
+        .screen-shake {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* --- 角色卡片通用樣式 --- */
+        .character-card {
+            width: 200px;
+            padding: 15px;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            position: absolute; 
+            transition: transform 0.2s ease;
+        }
+
+        .character-card h2 {
+            margin-top: 0;
+            color: #ffa500;
+        }
+
+        .character-card.attacking {
+            transform: scale(1.1);
+        }
+
+        #player { bottom: 20px; left: 20px; }
+        #monster { top: 20px; right: 20px; }
+
+        /* --- 血條/行動條樣式 --- */
+        .bar-container {
+            width: 100%;
+            height: 18px;
+            background-color: #1e1e1e;
+            border-radius: 9px;
+            overflow: hidden;
+            border: 1px solid #555;
+            margin-top: 5px;
+        }
+        .bar { height: 100%; border-radius: 8px; transition: width 0.1s linear; }
+        #player-health-bar { background-color: #4caf50; }
+        #monster-health-bar { background-color: #f44336; }
+        #player-action-bar { background-color: #00bcd4; }
+        #monster-action-bar { background-color: #ff9800; }
+        #exp-progress-bar { background-color: #FFD700; }
+        .hp-text { font-size: 14px; text-align: center; margin-top: 5px; font-weight: bold; }
+
+        /* --- 戰鬥日誌與控制 --- */
+        #controls { display: flex; flex-direction: column; align-items: center; gap: 15px; flex-shrink: 0; }
+        #combat-log { width: 100%; height: 140px; background-color: rgba(0,0,0,0.3); border: 1px solid #555; padding: 10px; overflow-y: auto; border-radius: 8px; font-family: monospace; font-size: 14px; box-sizing: border-box; flex-shrink: 0; }
+        #combat-log p { margin: 0 0 5px 0; padding: 0; color: #ddd; }
+
+        /* --- 按鈕樣式 --- */
+        button { padding: 12px 25px; font-size: 18px; font-weight: bold; color: white; background: linear-gradient(145deg, #ff8c00, #ffa500); border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.4); transition: all 0.2s ease; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(0,0,0,0.5); filter: brightness(1.1); }
+        button:active { transform: translateY(1px); box-shadow: 0 2px 3px rgba(0,0,0,0.4); }
+        button:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        #breakthrough-button.ready {
+            background: linear-gradient(145deg, #ff416c, #ff4b2b);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 65, 108, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 65, 108, 0); }
+        }
+
+        /* --- 視圖切換器 --- */
+        #view-switcher {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        .view-switch-btn {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            border: 2px solid #555;
+            transition: all 0.2s ease;
+        }
+        .view-switch-btn img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            transition: filter 0.2s ease;
+        }
+        .view-switch-btn:hover {
+            background: #444;
+            border-color: #777;
+        }
+        .view-switch-btn.active {
+            background: #ffa500;
+            border-color: #ff8c00;
+            box-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+        }
+        .view-switch-btn:not(.active) img {
+            filter: grayscale(1);
+            opacity: 0.7;
+        }
+        .view-switch-btn:hover:not(.active) img {
+            filter: grayscale(0);
+            opacity: 1;
+        }
+        
+        /* --- 特效樣式 --- */
+        .damage-indicator {
+            position: absolute;
+            font-size: 26px;
+            font-weight: bold;
+            color: #ffffff; /* 改為白色字體 */
+            /* 新增紅色外框與黑色陰影 */
+            text-shadow: 
+                -1px -1px 0 #c00, 1px -1px 0 #c00, 
+                -1px 1px 0 #c00, 1px 1px 0 #c00, 
+                2px 2px 4px rgba(0,0,0,0.8);
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes floatUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-60px); }
+        }
+
+        .exp-indicator {
+            position: absolute;
+            font-size: 22px;
+            font-weight: bold;
+            color: #FFD700; /* Gold */
+            text-shadow: 1px 1px 2px #000;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .floating-text-indicator {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            color: #E57373; /* Red */
+            text-shadow: 1px 1px 2px #000;
+            animation: floatUp 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .slash-effect {
+            position: absolute;
+            width: 100px;
+            height: 120px;
+            pointer-events: none;
+            z-index: 10;
+            animation: slash-anim 0.3s ease-out forwards;
+        }
+        .slash-effect::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent 45%, white 48%, white 52%, transparent 55%);
+            transform: rotate(10deg);
+        }
+        @keyframes slash-anim {
+            0% { transform: scale(0) rotate(0); opacity: 0; }
+            50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1.2) rotate(20deg); opacity: 0; }
+        }
+        
+        .impact-effect {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 215, 0, 0.8) 30%, rgba(255, 165, 0, 0) 65%);
+            animation: impact-anim 0.35s ease-out forwards;
+        }
+        @keyframes impact-anim {
+             0% { transform: scale(0.5); opacity: 1; }
+             80% { transform: scale(1.6); opacity: 0.5; }
+             100% { transform: scale(1.9); opacity: 0; }
+        }
+
+        /* 渡劫成功特效 */
+        .ascension-effect {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 223, 0, 0.8) 40%, rgba(255, 215, 0, 0) 70%);
+            pointer-events: none;
+            z-index: 20;
+            animation: ascend-anim 1.2s ease-out forwards;
+        }
+        @keyframes ascend-anim {
+            0% { transform: scale(0); opacity: 1; }
+            80% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        /* 渡劫失敗特效 */
+        .lightning-effect {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 250px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 50%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+            z-index: 20;
+            clip-path: polygon(100% 0, 100% 0, 100% 12%, 42% 12%, 100% 31%, 100% 38%, 31% 38%, 100% 59%, 100% 67%, 32% 67%, 100% 91%, 100% 100%, 0 100%, 0 100%, 0 88%, 59% 88%, 0 68%, 0 61%, 69% 61%, 0 40%, 0 32%, 71% 32%, 0 10%, 0 0);
+            animation: lightning-flash 0.5s ease-out forwards;
+        }
+        @keyframes lightning-flash {
+            0%, 100% { opacity: 0; }
+            10%, 30%, 50%, 70% { opacity: 1; }
+            20%, 40%, 60%, 80% { opacity: 0; }
+        }
+
+        .screen-flash-red {
+            animation: screen-flash-anim 0.5s ease-out;
+        }
+        @keyframes screen-flash-anim {
+            0% { background-color: rgba(255, 0, 0, 0); }
+            50% { background-color: rgba(150, 0, 0, 0.5); }
+            100% { background-color: rgba(255, 0, 0, 0); }
+        }
+        
+        /* --- 自訂提示訊息樣式 --- */
+        .alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .alert-box {
+            background: #2a2a2a;
+            padding: 25px 30px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .alert-box p {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            color: #e0e0e0;
+        }
+
+        .alert-box button {
+            padding: 8px 20px;
+            font-size: 16px;
+        }
+
+        /* --- Tooltip --- */
+        .info-row {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip {
+            visibility: hidden; /* Use visibility to prevent layout shifts */
+            opacity: 0;
+            position: absolute;
+            bottom: 125%; /* Position above the element */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            z-index: 100;
+            width: max-content; /* Adjust width to content */
+            text-align: left;
+            font-size: 13px;
+            pointer-events: none; /* So it doesn't interfere with mouse events */
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .info-row:hover .tooltip {
+            visibility: visible; /* Show on hover */
+            opacity: 1;
+        }
+
+        .tooltip::after { /* Arrow */
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .tooltip p {
+            margin: 3px 0;
+        }
+        .tooltip .bonus-value {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app-wrapper">
+        <!-- 修煉面板 -->
+        <div id="cultivation-panel">
+            <h2>修煉</h2>
+            <div id="weather-info">
+                <p><span id="weather-location">讀取天氣中...</span></p>
+                <p><span id="weather-condition">--</span> | 溫度: <span id="weather-temp">--</span>°C | 濕度: <span id="weather-humidity">--</span>%</p>
+            </div>
+            <div class="meditation-visual">
+                <div id="attributes-panel">
+                    <div id="assignable-points-container">
+                        <span>可分配點數: <span id="assignable-points">0</span></span>
+                        <span id="reset-attributes-btn" title="重置屬性點">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3L22 2M22 12.5a10 10 0 0 1-18.8 4.3L2 22"/></svg>
+                        </span>
+                    </div>
+                    <div class="attribute-row">
+                        <span>力量</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="strength">-</button>
+                            <span id="strength-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="strength">+</button>
+                            <button class="point-btn max-point-btn" data-stat="strength">++</button>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <span>敏捷</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="agility">-</button>
+                            <span id="agility-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="agility">+</button>
+                            <button class="point-btn max-point-btn" data-stat="agility">++</button>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <span>體質</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="constitution">-</button>
+                            <span id="constitution-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="constitution">+</button>
+                            <button class="point-btn max-point-btn" data-stat="constitution">++</button>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <span>智力</span>
+                        <div class="attribute-controls">
+                            <button class="point-btn remove-point-btn" data-stat="intelligence">-</button>
+                            <span id="intelligence-value" class="attribute-value">0</span>
+                            <button class="point-btn add-point-btn" data-stat="intelligence">+</button>
+                            <button class="point-btn max-point-btn" data-stat="intelligence">++</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="meditation-container">
+                    <img src="./player_image.png" alt="修煉中的小人" class="meditating-person-img" onerror="this.style.display='none'">
+                    <div class="pet-container">
+                        <img src="./pet_image.png" alt="寵物" class="pet-img" onerror="this.style.display='none'">
+                        <div class="pet-name-container">
+                            <span id="pet-name">豬豬</span>
+                            <span id="edit-pet-name">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- 光球將由 JavaScript 動態生成 -->
+                </div>
+            </div>
+            <div class="cultivation-stats">
+                <p id="cultivation-level-name">煉氣期 前期 (第1層)</p>
+                <div class="bar-container"><div id="exp-progress-bar" class="bar"></div></div>
+                <p>經驗: <span id="player-exp">0</span> / <span id="exp-required">100</span></p>
+                <div class="info-row" id="exp-rate-container">
+                    <p>修煉速度: <span id="exp-rate">1.00</span> 點/秒</p>
+                    <div class="tooltip" id="exp-rate-tooltip"></div>
+                </div>
+                <p>渡劫成功率: <span id="tribulation-rate">--</span>%</p>
+                <button id="breakthrough-button">渡劫</button>
+            </div>
+        </div>
+
+        <div id="game-container">
+            <!-- 戰鬥視圖容器 -->
+            <div id="combat-view-wrapper">
+                <!-- 戰鬥畫面 -->
+                <div id="combat-screen">
+                    <!-- 怪物顯示區 -->
+                    <div id="monster" class="character-card">
+                        <h2 id="monster-name"></h2>
+                        <p>生命:</p>
+                        <div class="bar-container"><div id="monster-health-bar" class="bar"></div></div>
+                        <p class="hp-text" id="monster-hp-text"></p>
+                        <p>行動條:</p>
+                        <div class="bar-container"><div id="monster-action-bar" class="bar"></div></div>
+                        <p>攻擊: <span id="monster-atk"></span> | 防禦: <span id="monster-def"></span> | 速度: <span id="monster-spd"></span></p>
+                    </div>
+
+                    <!-- 玩家顯示區 -->
+                    <div id="player" class="character-card">
+                        <h2>玩家</h2>
+                        <p>生命:</p>
+                        <div class="bar-container"><div id="player-health-bar" class="bar"></div></div>
+                        <p class="hp-text" id="player-hp-text"></p>
+                        <p>行動條:</p>
+                        <div class="bar-container"><div id="player-action-bar" class="bar"></div></div>
+                        <p>攻擊: <span id="player-atk"></span> | 防禦: <span id="player-def"></span> | 速度: <span id="player-spd"></span></p>
+                    </div>
+                </div>
+
+                <!-- 戰鬥日誌 -->
+                <div id="combat-log"></div>
+
+                <!-- 控制按鈕 -->
+                <div id="controls">
+                    <button id="start-pause-button">開始戰鬥</button>
+                    <button id="restart-button" style="display: none;">重新開始</button>
+                </div>
+            </div>
+
+            <!-- 新增的農場畫面 (預設隱藏) -->
+            <div id="farm-screen" style="display: none;">
+                <h2>我的靈田</h2>
+                <div id="farm-plot">
+                    <!-- 動物將由 JS 動態生成 -->
+                </div>
+            </div>
+
+            <!-- 新增的視圖切換器 -->
+            <div id="view-switcher">
+                <button id="switch-combat-btn" class="view-switch-btn" title="戰鬥">
+                    <img src="./combat-icon.png" alt="戰鬥圖示">
+                </button>
+                <button id="switch-farm-btn" class="view-switch-btn" title="農場">
+                    <img src="./farm-icon.png" alt="農場圖示">
+                </button>
+            </div>
+        </div>
+
+        <!-- 測試用控制項 -->
+        <div id="test-controls">
+            <label for="monster-select">選擇測試怪物:</label>
+            <select id="monster-select"></select>
+            <button id="clear-save-btn">清除本地存檔</button>
+        </div>
+    </div>
+
+    <!-- 自訂提示訊息 HTML -->
+    <div id="custom-alert-overlay" class="alert-overlay" style="display: none;">
+        <div id="custom-alert-box" class="alert-box">
+            <p id="custom-alert-message"></p>
+            <button id="custom-alert-close">臣妾知道了</button>
+        </div>
+    </div>
+
+
+    <!-- 載入設定檔 -->
+    <script src="game_settings.js" defer></script>
+    <script src="ui_manager.js" defer></script>
+    <script src="main.js" defer></script>
+</body>
+</html>
+
