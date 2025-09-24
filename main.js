@@ -589,6 +589,8 @@ document.addEventListener('DOMContentLoaded', () => {
         farmAnimals = [createNewChicken()];
         lastChickenSpawnTime = Date.now();
 
+        ui.UIElements.musicSelect.value = 1; // 預設播放 "Sun Moon Dark"
+
         startSpecificMonsterFight(0);
 
         recalculatePlayerStats();
@@ -800,8 +802,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.updateRevolvingOrbs(cultivationLevelIndex);
         }
         
-        // 修正：在讀檔後，設定一個一次性的事件監聽器來處理首次播放
-        if (gameLoaded && ui.UIElements.musicSelect.value > 0) {
+        // 修正：無論是新遊戲還是讀檔，都設定一次性的事件監聽器來處理首次播放
+        if (ui.UIElements.musicSelect.value > 0) {
             const playMusicOnFirstInteraction = () => {
                 playSelectedMusic();
             };
