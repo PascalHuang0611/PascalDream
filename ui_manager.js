@@ -57,7 +57,9 @@
         farmScreen: document.getElementById('farm-screen'),
         switchCombatBtn: document.getElementById('switch-combat-btn'),
         switchFarmBtn: document.getElementById('switch-farm-btn'),
-        farmPlot: document.getElementById('farm-plot')
+        farmPlot: document.getElementById('farm-plot'),
+        // --- 音樂 ---
+        musicSelect: document.getElementById('music-select')
 	};
 
     function populateMonsterSelector(database, selectElement) {
@@ -65,6 +67,16 @@
             const option = document.createElement('option');
             option.value = index;
             option.textContent = monster.name;
+            selectElement.appendChild(option);
+        });
+    }
+
+    // --- 新增：填充音樂選擇器 ---
+    function populateMusicSelector(tracks, selectElement) {
+        tracks.forEach((track, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = track.name;
             selectElement.appendChild(option);
         });
     }
@@ -393,6 +405,7 @@
     window.UIManager = {
         UIElements,
         populateMonsterSelector,
+        populateMusicSelector, // 匯出新函式
         translateWeatherCode,
         updateWeatherUI,
         updateCultivationUI,

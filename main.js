@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 1. 初始設定 ---
     const PET_NORMAL_IMAGE = './pet_image.png';
     const PET_CRY_IMAGE = './pet_image_cry.png';
-    const GAME_VERSION = '1.8'; // 版本更新
+    const GAME_VERSION = '1.9'; // 版本更新
     const SAVE_KEY = 'cultivationGameSave';
 
     // --- 遊戲狀態變數 ---
@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameInterval = null;
     let petCryTimeout = null;
     let activeView = 'combat'; 
+    let bgmPlayer; // 新增：音樂播放器元素
     
     // --- 農場變數 ---
     let farmAnimals = []; // 全新的動物數據結構
@@ -65,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             petName: petName,
             farmAnimals: farmAnimals, // 直接儲存動物陣列 (包含點擊次數、死亡時間)
             lastChickenSpawnTime: lastChickenSpawnTime,
-            activeView: activeView
+            activeView: activeView,
+            musicSelection: ui.UIElements.musicSelect.value // 新增：儲存音樂選項
         };
         localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
     }
@@ -112,6 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastChickenSpawnTime += canSpawnCount * spawnInterval * 1000;
             }
 
+            // --- 載入音樂選擇 ---
+            if (parsedData.musicSelection) {
+                ui.UIElements.musicSelect.value = parsedData.musicSelection;
+                // 注意：這裡不再直接播放，交給 initGame 處理
+            }
+
             ui.logMessage('成功讀取進度。');
             return true;
 
@@ -125,6 +133,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearSaveData() {
         localStorage.removeItem(SAVE_KEY);
         location.reload();
+    }
+
+    // --- 音樂播放 ---
+    function playSelectedMusic() {
+        const selectedIndex = ui.UIElements.musicSelect.value;
+        const track = settings.MUSIC_TRACKS[selectedIndex];
+        if (track && track.src) {
+            if (bgmPlayer.src !== track.src) {
+                bgmPlayer.src = track.src;
+            }
+            bgmPlayer.play().catch(e => console.error("音樂播放需要使用者互動才能開始。", e));
+        } else {
+            bgmPlayer.pause();
+            bgmPlayer.src = "";
+        }
     }
 
     // --- 屬性與能力值 ---
@@ -530,12 +553,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const movementAction = () => moveSingleAnimal(animalElement);
         
-        if (!animalData.hasMoved) {
+        // 增加一個隨機的延遲來錯開初始移動
+        const initialDelay = animalData.hasMoved ? 0 : Math.random() * 3000;
+
+        setTimeout(() => {
+            if (!farmAnimals[parseInt(animalElement.dataset.id, 10)] || farmAnimals[parseInt(animalElement.dataset.id, 10)].isDead) return;
             moveSingleAnimal(animalElement);
             animalData.hasMoved = true;
-        }
-        
-        animalData.movementIntervalId = setInterval(movementAction, 4000 + Math.random() * 1000);
+            animalData.movementIntervalId = setInterval(movementAction, 4000 + Math.random() * 2000); // 4-6秒的隨機間隔
+        }, initialDelay);
     }
     
     // --- 遊戲流程控制 ---
@@ -685,6 +711,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedIndex = parseInt(event.target.value, 10);
             startSpecificMonsterFight(selectedIndex);
         });
+        // 新增：音樂選擇事件
+        ui.UIElements.musicSelect.addEventListener('change', playSelectedMusic);
+
         ui.UIElements.petImg.addEventListener('click', handlePetClick);
         ui.UIElements.editPetName.addEventListener('click', () => {
             const newName = prompt('請為您的寵物取新名字:', petName);
@@ -753,10 +782,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- 5. 遊戲初始化 ---
     function initGame() {
+        bgmPlayer = document.getElementById('bgm-player'); // 獲取 audio 元素
         ui.populateMonsterSelector(settings.MONSTERS_DATABASE, ui.UIElements.monsterSelectEl);
+        ui.populateMusicSelector(settings.MUSIC_TRACKS, ui.UIElements.musicSelect); // 填充音樂選項
         setupEventListeners();
         
-        if (!loadGame()) {
+        const gameLoaded = loadGame();
+        
+        if (!gameLoaded) {
             ui.logMessage("點擊按鈕開始自動戰鬥。");
             resetGame(); 
         } else {
@@ -765,6 +798,15 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.updateAttributesUI(playerAttributes, settings.initialPlayerAttributes);
             ui.updateCultivationUI(settings.CULTIVATION_DATA[cultivationLevelIndex], playerExperience, isAwaitingTribulation, currentWeatherCode);
             ui.updateRevolvingOrbs(cultivationLevelIndex);
+        }
+        
+        // 修正：在讀檔後，設定一個一次性的事件監聽器來處理首次播放
+        if (gameLoaded && ui.UIElements.musicSelect.value > 0) {
+            const playMusicOnFirstInteraction = () => {
+                playSelectedMusic();
+            };
+            document.body.addEventListener('click', playMusicOnFirstInteraction, { once: true });
+            document.body.addEventListener('keydown', playMusicOnFirstInteraction, { once: true });
         }
         
         farmAnimals = farmAnimals.filter(a => a !== null); // 初始載入時清理

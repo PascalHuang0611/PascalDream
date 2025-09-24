@@ -56,11 +56,31 @@
         exp_bonus_per_chicken: 0.5,
         exp_per_chicken_click: 100,
         chicken_clicks_to_die: 100,
-        exp_per_skeleton_clear: 1000, // 新增：清除骷髏獲得的經驗
+        exp_per_skeleton_clear: 1000, 
         chicken_normal_image: './chicken.png',
         chicken_clicked_image: './chicken_clicked.png',
         chicken_dead_image: './chicken_dead.png'
     };
+
+    // --- 音樂清單 ---
+    const MUSIC_TRACKS = [
+        { name: "停止播放", src: "" },
+        { name: "Sun Moon Dark", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/Sun%20Moon%20Dark%E4%B8%BB%E9%A1%8C.mp3" },
+        { name: "Light of the future", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/Light%20of%20the%20future%E4%B8%BB%E9%A1%8C..mp3" },
+        { name: "Zero", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/Zero.mp3" },
+        { name: "Kira", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/Kira-audio.mp3" },
+        { name: "冷褲的難能", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E5%81%9A%E4%B8%80%E5%80%8B%E5%86%B7%E8%A4%B2%E7%9A%84%E9%9B%A3%E8%83%BD.mp3" },
+        { name: "聽起來好興奮", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E7%82%BA%E4%BB%80%E9%BA%BC%E8%81%BD%E8%B5%B7%E4%BE%86%E5%A5%BD%E8%88%88%E5%A5%AE%E5%A5%BD%E5%A5%BD%E5%94%B1.mp3" },
+        { name: "苦境桿來的感覺", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E7%B5%82%E6%96%BC%E6%9C%89%E8%8B%A6%E5%A2%83%E6%A1%BF%E4%BE%86%E7%9A%84%E6%84%9F%E8%A6%BA.mp3" },
+        { name: "強史詩戰鬥", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E8%92%B8%E6%B0%A3%E9%B5%AC%E5%85%8B%EF%BC%8C%E9%82%AA%E6%83%A1%EF%BC%8C%E5%BC%B7%E5%8F%B2%E8%A9%A9%E6%88%B0%E9%AC%A5.mp3" },
+        { name: "精力充沛", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E7%B2%BE%E5%8A%9B%E5%85%85%E6%B2%9B.mp3" },
+        { name: "蒸氣鵬克", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E8%92%B8%E6%B0%A3%E9%B5%AC%E5%85%8B.mp3" },
+        { name: "輪到女主", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E8%BC%AA%E5%88%B0%E5%A5%B3%E4%B8%BB.mp3" },
+        { name: "魔王來了嗎", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E9%AD%94%E7%8E%8B%E4%BE%86%E4%BA%86%E5%97%8E.mp3" },
+        { name: "魔王都好可憐", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/%E9%AD%94%E7%8E%8B%E9%83%BD%E5%A5%BD%E5%8F%AF%E6%86%90.mp3" },
+        { name: "Music-audio", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/Music-audio.mp3" },
+        { name: "Music-audio2", src: "https://github.com/PascalHuang0611/PascalDream/raw/refs/heads/main/Music-audio2.mp3" }
+    ];
 
     // --- 渡劫設定 ---
     const TRIBULATION_SETTINGS = {
@@ -176,6 +196,7 @@
         HP_GAINS_ON_LEVELUP,
         BASE_EXP_GAINS,
         FARM_SETTINGS,
+        MUSIC_TRACKS, // 匯出音樂清單
         TRIBULATION_SETTINGS,
         MONSTERS_DATABASE,
         REALM_DEFINITIONS,
