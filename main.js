@@ -652,13 +652,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (animalData.isDead) {
             const COOLDOWN_MS = 10000; // 10 秒
             if (Date.now() - animalData.deathTimestamp < COOLDOWN_MS) {
-                ui.showFloatingText("于庭被點壞了QQ!!", target);
+                ui.showFloatingText("你這個殺雞犯!!", target);
                 return;
             }
 
             const expAmount = settings.FARM_SETTINGS.exp_per_skeleton_clear;
             gainExperience(expAmount);
-            ui.showFloatingText("于庭發出強烈白光後消失了~", target);
+            ui.showFloatingText("你好殘忍啊~~~~", target);
             
             farmAnimals[id] = null;
             target.remove();
@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (animalData.clicks >= settings.FARM_SETTINGS.chicken_clicks_to_die) {
             animalData.isDead = true;
             animalData.deathTimestamp = Date.now(); // 記錄死亡時間
-            ui.logMessage('一隻于庭壽元已盡，化為了骸骨...', '#aaaaaa');
+            ui.logMessage('一隻靈獸壽元已盡，化為了骸骨...', '#aaaaaa');
             
             animalData.movementIntervalId = null;
             ui.updateAnimalState(target, animalData);

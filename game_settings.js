@@ -51,15 +51,15 @@
 
     // --- 農場設定 ---
     const FARM_SETTINGS = {
-        chicken_spawn_interval_seconds: 60, 
-        max_chickens: 1,                    
-        exp_bonus_per_chicken: 5,
+        chicken_spawn_interval_seconds: 300, 
+        max_chickens: 20,                    
+        exp_bonus_per_chicken: 0.5,
         exp_per_chicken_click: 100,
-        chicken_clicks_to_die: 20,
+        chicken_clicks_to_die: 100,
         exp_per_skeleton_clear: 1000, 
-        chicken_normal_image: './yt.png',
-        chicken_clicked_image: './yt_clicked.png',
-        chicken_dead_image: './yt_dead.png'
+        chicken_normal_image: './chicken.png',
+        chicken_clicked_image: './chicken_clicked.png',
+        chicken_dead_image: './chicken_dead.png'
     };
 
     // --- 音樂清單 ---
